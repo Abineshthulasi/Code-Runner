@@ -12,6 +12,7 @@ import Orders from "@/pages/Orders";
 import Billing from "@/pages/Billing";
 import Expenses from "@/pages/Expenses";
 import Bank from "@/pages/Bank";
+import Reports from "@/pages/Reports";
 
 function Router() {
   const loadData = useStore((state) => state.loadData);
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/billing" component={Billing}/>
       <Route path="/expenses" component={Expenses}/>
       <Route path="/bank" component={Bank}/>
+      <Route path="/reports" component={Reports}/>
       <Route component={NotFound} />
     </Switch>
   );

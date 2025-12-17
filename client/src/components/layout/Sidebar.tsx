@@ -5,7 +5,8 @@ import {
   Receipt, 
   Wallet, 
   Building2,
-  Menu
+  Menu,
+  FileBarChart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { label: "Billing", icon: Receipt, href: "/billing" },
   { label: "Expenses", icon: Wallet, href: "/expenses" },
   { label: "Bank", icon: Building2, href: "/bank" },
+  { label: "Reports", icon: FileBarChart, href: "/reports" },
 ];
 
 export function Sidebar() {
