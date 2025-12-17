@@ -191,7 +191,17 @@ export const useStore = create<StoreState>((set, get) => ({
     }
 
     await get().loadData();
-    return newOrder;
+
+    // Convert to Store Order type
+    return {
+      ...newOrder,
+      totalAmount: Number(newOrder.totalAmount),
+      advanceAmount: Number(newOrder.advanceAmount),
+      balanceAmount: Number(newOrder.balanceAmount),
+      workStatus: newOrder.workStatus as any,
+      deliveryStatus: newOrder.deliveryStatus as any,
+      paymentStatus: newOrder.paymentStatus as any
+    };
   },
 
   updateOrder: async (id, updates) => {
