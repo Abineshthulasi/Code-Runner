@@ -87,6 +87,7 @@ interface StoreState {
   getTotalSales: () => number;
   getTotalExpenses: () => number;
   getPendingOrdersCount: () => number;
+  getPendingSalesAmount: () => number;
 
   updateBalances: (updates: { bankBalance?: string; cashInHand?: string }) => Promise<void>;
 }
@@ -354,8 +355,14 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   getPendingOrdersCount: () => {
-    const state = get();
-    return state.orders.filter(o => o.workStatus !== 'Ready' && o.workStatus !== 'Cancelled').length;
+    const { orders } = get();
+    return orders.filter(o => o.workStatus === 'Pending' || o.workStatus === 'In Progress').length;
+  },
+  getPendingSalesAmount: () => {
+    const { orders } = get();
+    return orders
+      .filter(o => o.paymentStatus === 'Unpaid' || o.paymentStatus === 'Partial')
+      .reduce((sum, o) => sum + Number(o.balanceAmount), 0);
   },
 
   updateBalances: async (updates) => {

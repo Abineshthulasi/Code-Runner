@@ -141,6 +141,9 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{pendingOrders}</div>
               <p className="text-xs text-muted-foreground mt-1">Orders in progress</p>
+              <p className="text-xs font-medium text-amber-600 mt-2">
+                Pending: ₹{store.getPendingSalesAmount().toLocaleString()}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -262,8 +265,8 @@ export default function Dashboard() {
                       <div className="text-right">
                         <div className="text-sm font-semibold">₹{order.totalAmount}</div>
                         <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-800' :
-                            order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
+                          order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
                           }`}>
                           {order.workStatus}
                         </div>
