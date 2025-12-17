@@ -191,6 +191,7 @@ export const useStore = create<StoreState>((set, get) => ({
     }
 
     await get().loadData();
+    return newOrder;
   },
 
   updateOrder: async (id, updates) => {
