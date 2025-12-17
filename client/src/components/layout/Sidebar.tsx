@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Receipt, 
-  Wallet, 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Receipt,
+  Wallet,
   Building2,
   Menu,
   FileBarChart
@@ -29,7 +29,7 @@ export function Sidebar() {
     <div className="h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col fixed left-0 top-0 hidden md:flex">
       <div className="p-6 border-b border-sidebar-border">
         <h1 className="text-xl font-bold font-sans tracking-tight text-sidebar-foreground">
-          Bobiz Atelier
+          Bobiz
         </h1>
         <p className="text-xs text-muted-foreground mt-1">Boutique Management</p>
       </div>
@@ -78,13 +78,13 @@ export function MobileSidebar() {
       <SheetContent side="left" className="w-64 p-0 bg-sidebar">
         <div className="p-6 border-b border-sidebar-border">
           <h1 className="text-xl font-bold font-sans tracking-tight text-sidebar-foreground">
-            Bobiz Atelier
+            Bobiz
           </h1>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {NAV_ITEMS.map((item) => (
             <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
-               <a
+              <a
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors",
                   location === item.href

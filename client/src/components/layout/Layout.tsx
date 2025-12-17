@@ -8,11 +8,11 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar />
-      
+
       <main className="flex-1 md:ml-64 min-w-0 flex flex-col">
         <header className="h-16 border-b border-border flex items-center px-4 md:px-8 bg-card md:hidden">
           <MobileSidebar />
-          <span className="ml-2 font-semibold md:hidden">Bobiz Atelier</span>
+          <span className="ml-2 font-semibold md:hidden">Bobiz</span>
         </header>
 
         <div className="flex-1 p-4 md:p-8 overflow-y-auto">
