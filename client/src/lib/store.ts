@@ -200,7 +200,11 @@ export const useStore = create<StoreState>((set, get) => ({
       balanceAmount: Number(newOrder.balanceAmount),
       workStatus: newOrder.workStatus as any,
       deliveryStatus: newOrder.deliveryStatus as any,
-      paymentStatus: newOrder.paymentStatus as any
+      paymentStatus: newOrder.paymentStatus as any,
+      paymentHistory: newOrder.paymentHistory.map(p => ({
+        ...p,
+        mode: p.mode as any
+      }))
     };
   },
 
