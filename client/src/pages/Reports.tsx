@@ -90,77 +90,159 @@ export default function Reports() {
     // Sort by date
     allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Initialize running balances
-    let runningBank = 25000; // Initial bank balance
-    let runningCash = 5000;  // Initial cash in hand
+    // Calculate opening balances for the selected year (global history)
+    let runningBank = 0;
+    let runningCash = 0;
 
-    // Calculate monthly data
+    // First, process all transactions PRIOR to the selected year to get the accurate opening balance
+    const selectedYearInt = parseInt(selectedYear);
+    const startOfSelectedYear = new Date(selectedYearInt, 0, 1);
+
+    // Also determine the date of the very first transaction to know when to start showing data
+    const firstTxDate = allTransactions.length > 0 ? new Date(allTransactions[0].date) : new Date();
+    const currentDate = new Date();
+
+    // Iterate through all transactions
+    // 1. If tx is before selected year -> just update running balances
+    // 2. If tx is within selected year -> update balances AND track monthly totals
+
+    // Initialize monthly aggregators
+    const monthlyData = new Array(12).fill(0).map(() => ({
+      sales: 0,
+      expenses: 0,
+      deposits: 0,
+      withdrawals: 0
+    }));
+
+    allTransactions.forEach(tx => {
+      const txDate = new Date(tx.date);
+
+      // Update running balances regardless of date
+      const amount = tx.amount;
+      if (tx.type === 'sale') {
+        if (tx.mode === 'Cash') runningCash += amount;
+        else runningBank += amount;
+      } else if (tx.type === 'expense') {
+        if (tx.mode === 'Cash') runningCash -= amount;
+        else runningBank -= amount;
+      } else if (tx.type === 'deposit') {
+        if (tx.mode === 'Cash') runningCash += amount;
+        else runningBank += amount;
+      } else if (tx.type === 'withdraw') {
+        if (tx.mode === 'Cash') runningCash -= amount;
+        else runningBank -= amount;
+      }
+
+      // If this transaction is in the selected year, add to monthly totals
+      if (txDate.getFullYear() === selectedYearInt) {
+        const monthIdx = txDate.getMonth();
+        const mData = monthlyData[monthIdx];
+
+        if (tx.type === 'sale') mData.sales += amount;
+        else if (tx.type === 'expense') mData.expenses += amount;
+        else if (tx.type === 'deposit') mData.deposits += amount;
+        else if (tx.type === 'withdraw') mData.withdrawals += amount;
+      }
+    });
+
+    // Now build the report array based on the final monthly data
+    // But we need to reconstruct the "running" state month by month for the selected year
+
+    // Reset running balances to what they were at START of selected year
+    // We do this by re-calculating from 0 but stopping at Jan 1st
+    let yearOpeningBank = 0;
+    let yearOpeningCash = 0;
+
+    allTransactions.forEach(tx => {
+      const txDate = new Date(tx.date);
+      if (txDate < startOfSelectedYear) {
+        const amount = tx.amount;
+        if (tx.type === 'sale') {
+          if (tx.mode === 'Cash') yearOpeningCash += amount;
+          else yearOpeningBank += amount;
+        } else if (tx.type === 'expense') {
+          if (tx.mode === 'Cash') yearOpeningCash -= amount;
+          else yearOpeningBank -= amount;
+        } else if (tx.type === 'deposit') {
+          if (tx.mode === 'Cash') yearOpeningCash += amount;
+          else yearOpeningBank += amount;
+        } else if (tx.type === 'withdraw') {
+          if (tx.mode === 'Cash') yearOpeningCash -= amount;
+          else yearOpeningBank -= amount;
+        }
+      }
+    });
+
+    // Now proceed month by month in the selected year
+    let currentBank = yearOpeningBank;
+    let currentCash = yearOpeningCash;
+
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-      const year = parseInt(selectedYear);
-      const monthStart = new Date(year, monthIndex, 1);
-      const monthEnd = new Date(year, monthIndex + 1, 0);
+      // Determine if we should show this month
+      // Show if: 
+      // 1. It's not in the future relative to today AND
+      // 2. It's not before the first transaction EVER (unless it's the same year and we want to show empty start? User said "starts from when amount deposite")
 
-      const openingBank = runningBank;
-      const openingCash = runningCash;
+      const thisMonthDate = new Date(selectedYearInt, monthIndex, 1);
+      const nextMonthDate = new Date(selectedYearInt, monthIndex + 1, 1); // For comparison
+
+      // Calculate closing balances for this month
+      // We can use the pre-calculated monthlyData
+      // But we need to account for the specific mode splits which monthlyData aggregated loosely?
+      // Actually monthlyData didn't track mode splits, so we need to iterate again or better yet, refine the loop structure.
+
+      // Optimised approach:
+      // Loop 12 months. Inside, find transactions for that month.
 
       let monthlySales = 0;
       let monthlyExpenses = 0;
       let monthlyDeposits = 0;
       let monthlyWithdrawals = 0;
 
+      let monthOpeningBank = currentBank;
+      let monthOpeningCash = currentCash;
+
       allTransactions.forEach(tx => {
         const txDate = new Date(tx.date);
-        if (txDate >= monthStart && txDate <= monthEnd) {
-          switch (tx.type) {
-            case 'sale':
-              monthlySales += tx.amount;
-              if (tx.mode === 'Cash') {
-                runningCash += tx.amount;
-              } else {
-                runningBank += tx.amount;
-              }
-              break;
-            case 'expense':
-              monthlyExpenses += tx.amount;
-              if (tx.mode === 'Cash') {
-                runningCash -= tx.amount;
-              } else {
-                runningBank -= tx.amount;
-              }
-              break;
-            case 'deposit':
-              monthlyDeposits += tx.amount;
-              if (tx.mode === 'Cash') {
-                runningCash += tx.amount;
-              } else {
-                runningBank += tx.amount;
-              }
-              break;
-            case 'withdraw':
-              monthlyWithdrawals += tx.amount;
-              if (tx.mode === 'Cash') {
-                runningCash -= tx.amount;
-              } else {
-                runningBank -= tx.amount;
-              }
-              break;
+        if (txDate.getFullYear() === selectedYearInt && txDate.getMonth() === monthIndex) {
+          const amount = tx.amount;
+          if (tx.type === 'sale') {
+            monthlySales += amount;
+            if (tx.mode === 'Cash') currentCash += amount; else currentBank += amount;
+          } else if (tx.type === 'expense') {
+            monthlyExpenses += amount;
+            if (tx.mode === 'Cash') currentCash -= amount; else currentBank -= amount;
+          } else if (tx.type === 'deposit') {
+            monthlyDeposits += amount;
+            if (tx.mode === 'Cash') currentCash += amount; else currentBank += amount;
+          } else if (tx.type === 'withdraw') {
+            monthlyWithdrawals += amount;
+            if (tx.mode === 'Cash') currentCash -= amount; else currentBank -= amount;
           }
         }
       });
 
-      report.push({
-        month: MONTHS[monthIndex],
-        monthIndex,
-        year,
-        sales: monthlySales,
-        expenses: monthlyExpenses,
-        deposits: monthlyDeposits,
-        withdrawals: monthlyWithdrawals,
-        openingBank,
-        closingBank: runningBank,
-        openingCash,
-        closingCash: runningCash,
-      });
+      // Visibility Check
+      // Don't show future months
+      // Don't show months before the very first transaction starts (if year is same)
+      const isFuture = thisMonthDate > currentDate;
+      const isBeforeStart = thisMonthDate < new Date(firstTxDate.getFullYear(), firstTxDate.getMonth(), 1);
+
+      if (!isFuture && !isBeforeStart) {
+        report.push({
+          month: MONTHS[monthIndex],
+          monthIndex,
+          year: selectedYearInt,
+          sales: monthlySales,
+          expenses: monthlyExpenses,
+          deposits: monthlyDeposits,
+          withdrawals: monthlyWithdrawals,
+          openingBank: monthOpeningBank,
+          closingBank: currentBank,
+          openingCash: monthOpeningCash,
+          closingCash: currentCash,
+        });
+      }
     }
 
     return report;
