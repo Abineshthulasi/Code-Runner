@@ -65,11 +65,11 @@ interface StoreState {
   orders: Order[];
   expenses: Expense[];
   transactions: Transaction[];
-  
+
   // Data Loading
   isLoading: boolean;
   loadData: () => Promise<void>;
-  
+
   // Actions - these now sync with backend
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'paymentHistory' | 'workStatus' | 'deliveryStatus' | 'paymentStatus' | 'balanceAmount' | 'advanceAmount'> & { initialPayment?: number, initialPaymentMode?: TransactionMode }) => Promise<void>;
   updateOrder: (id: string, updates: Partial<Order>) => Promise<void>;
@@ -80,13 +80,15 @@ interface StoreState {
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
-  
+
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  
+
   // Computeds
   getTotalSales: () => number;
   getTotalExpenses: () => number;
   getPendingOrdersCount: () => number;
+
+  updateBalances: (updates: { bankBalance?: string; cashInHand?: string }) => Promise<void>;
 }
 
 // Helper to convert string amounts to numbers from API
@@ -172,7 +174,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const state = get();
     let newBank = state.bankBalance;
     let newCash = state.cashInHand;
-    
+
     if (initialPayment > 0) {
       if (initialPaymentMode === 'Cash') {
         newCash += initialPayment;
@@ -205,18 +207,18 @@ export const useStore = create<StoreState>((set, get) => ({
 
   addOrderPayment: async (orderId, amount, mode, date, note) => {
     await api.addOrderPayment(orderId, { amount, mode, date, note });
-    
+
     // Update balances
     const state = get();
     let newBank = state.bankBalance;
     let newCash = state.cashInHand;
-    
+
     if (mode === 'Cash') {
       newCash += amount;
     } else {
       newBank += amount;
     }
-    
+
     await api.updateBalances({
       bankBalance: newBank.toString(),
       cashInHand: newCash.toString(),
@@ -354,5 +356,10 @@ export const useStore = create<StoreState>((set, get) => ({
   getPendingOrdersCount: () => {
     const state = get();
     return state.orders.filter(o => o.workStatus !== 'Ready' && o.workStatus !== 'Cancelled').length;
+  },
+
+  updateBalances: async (updates) => {
+    await api.updateBalances(updates);
+    await get().loadData();
   }
 }));
