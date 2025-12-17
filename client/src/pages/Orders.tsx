@@ -160,23 +160,23 @@ export default function Orders() {
                     <TableCell className="text-xs">{order.orderDate}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
-                          order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
+                        order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                          'bg-blue-100 text-blue-700'
                         }`}>
                         {order.workStatus}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-700' :
-                          'bg-gray-100 text-gray-700'
+                        'bg-gray-100 text-gray-700'
                         }`}>
                         {order.deliveryStatus}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' :
-                          order.paymentStatus === 'Unpaid' ? 'bg-red-100 text-red-700' :
-                            'bg-orange-100 text-orange-700'
+                        order.paymentStatus === 'Unpaid' ? 'bg-red-100 text-red-700' :
+                          'bg-orange-100 text-orange-700'
                         }`}>
                         {order.paymentStatus}
                       </span>
@@ -193,6 +193,13 @@ export default function Orders() {
                         }}
                       >
                         Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`/print-bill/${order.id}`, '_blank')}
+                      >
+                        <Printer className="w-4 h-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
