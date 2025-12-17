@@ -75,12 +75,14 @@ export default function Billing() {
     name: "items"
   });
 
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
   const watchItems = form.watch("items");
   const totalAmount = watchItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
   const balanceAmount = totalAmount - (Number(form.watch("advanceAmount")) || 0);
 
-  const onSubmit = (data: OrderFormValues) => {
-    store.addOrder({
+  const onSubmit = async (data: OrderFormValues) => {
+    const newOrder = await store.addOrder({
       orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       clientName: data.clientName,
       phone: data.phone,
@@ -93,8 +95,22 @@ export default function Billing() {
       notes: data.notes
     });
 
+    setCreatedOrderId(newOrder.id);
     toast({ title: "Order Created", description: "New order has been successfully generated." });
-    setLocation("/orders");
+  };
+
+  const handleReset = () => {
+    setCreatedOrderId(null);
+    form.reset({
+      clientName: "",
+      phone: "",
+      orderDate: new Date().toISOString().split('T')[0],
+      dueDate: "",
+      items: [{ description: "", quantity: 1, price: 0 }],
+      advanceAmount: 0,
+      advanceMode: "Cash",
+      notes: ""
+    });
   };
 
   return (
@@ -306,6 +322,26 @@ export default function Billing() {
           </CardContent>
         </Card>
       </div>
+      {/* Success Dialog */}
+      <Dialog open={!!createdOrderId} onOpenChange={(open) => !open && handleReset()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Printer className="w-5 h-5 text-green-600" />
+              Order Created Successfully
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <p className="text-muted-foreground">The order has been saved. What would you like to do next?</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={handleReset}>New Order</Button>
+              <Button onClick={() => window.open(`/print-bill/${createdOrderId}`, '_blank')} className="gap-2">
+                <Printer className="w-4 h-4" /> Print Bill
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
