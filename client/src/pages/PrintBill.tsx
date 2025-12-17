@@ -44,8 +44,8 @@ export default function PrintBill() {
                 {/* Header */}
                 <div className="flex justify-between items-start border-b pb-6">
                     <div>
-                        <h1 className="text-4xl font-serif font-bold tracking-tight">Bobiz</h1>
-                        <p className="text-sm mt-1 text-gray-600">Premium Fashion Atelier</p>
+                        <h1 className="text-4xl font-serif font-bold tracking-tight">Bobiz Designer Studio</h1>
+                        <p className="text-sm mt-1 text-gray-600"></p>
                     </div>
                     <div className="text-right text-sm">
                         <h2 className="font-bold text-lg mb-1">INVOICE</h2>
@@ -112,7 +112,7 @@ export default function PrintBill() {
 
                 {/* Footer */}
                 <div className="mt-16 pt-8 border-t text-center text-sm text-gray-500">
-                    <p>Thank you for choosing Bobiz.</p>
+                    <p>Thank you for choosing Bobiz Designer Studio.</p>
                     <p className="mt-1 text-xs">For questions concerning this invoice, please contact us.</p>
                 </div>
             </div>
