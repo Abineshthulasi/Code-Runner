@@ -29,10 +29,12 @@ export default function Bank() {
   const [fundAmount, setFundAmount] = useState("");
   const [fundDesc, setFundDesc] = useState("");
   const [fundMode, setFundMode] = useState<"Cash" | "Bank">("Bank");
+  const [fundDate, setFundDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawDesc, setWithdrawDesc] = useState("");
   const [withdrawMode, setWithdrawMode] = useState<"Cash" | "Bank">("Bank");
+  const [withdrawDate, setWithdrawDate] = useState(new Date().toISOString().split('T')[0]);
 
   const handleAddFunds = () => {
     if (!fundAmount) return;
@@ -41,10 +43,11 @@ export default function Bank() {
       amount: Number(fundAmount),
       description: fundDesc || 'Deposit',
       mode: fundMode,
-      date: new Date().toISOString().split('T')[0]
+      date: fundDate
     });
     setFundAmount("");
     setFundDesc("");
+    setFundDate(new Date().toISOString().split('T')[0]);
     toast({ title: "Success", description: "Funds added." });
   };
 
@@ -55,10 +58,11 @@ export default function Bank() {
       amount: Number(withdrawAmount),
       description: withdrawDesc || 'Withdrawal',
       mode: withdrawMode,
-      date: new Date().toISOString().split('T')[0]
+      date: withdrawDate
     });
     setWithdrawAmount("");
     setWithdrawDesc("");
+    setWithdrawDate(new Date().toISOString().split('T')[0]);
     toast({ title: "Success", description: "Funds withdrawn." });
   };
 
@@ -94,17 +98,27 @@ export default function Bank() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Account</label>
-                <Select value={fundMode} onValueChange={(v: any) => setFundMode(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Bank">Bank Account</SelectItem>
-                    <SelectItem value="Cash">Cash in Hand</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <Input
+                    type="date"
+                    value={fundDate}
+                    onChange={(e) => setFundDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Account</label>
+                  <Select value={fundMode} onValueChange={(v: any) => setFundMode(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank">Bank Account</SelectItem>
+                      <SelectItem value="Cash">Cash in Hand</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount</label>
@@ -135,17 +149,27 @@ export default function Bank() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Source Account</label>
-                <Select value={withdrawMode} onValueChange={(v: any) => setWithdrawMode(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Bank">Bank Account</SelectItem>
-                    <SelectItem value="Cash">Cash in Hand</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <Input
+                    type="date"
+                    value={withdrawDate}
+                    onChange={(e) => setWithdrawDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Source Account</label>
+                  <Select value={withdrawMode} onValueChange={(v: any) => setWithdrawMode(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank">Bank Account</SelectItem>
+                      <SelectItem value="Cash">Cash in Hand</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount</label>
