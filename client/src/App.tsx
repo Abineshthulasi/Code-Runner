@@ -14,7 +14,6 @@ import Expenses from "@/pages/Expenses";
 import Bank from "@/pages/Bank";
 import Reports from "@/pages/Reports";
 import PrintBill from "@/pages/PrintBill";
-import PrintBill from "@/pages/PrintBill";
 
 function Router() {
   const loadData = useStore((state) => state.loadData);
