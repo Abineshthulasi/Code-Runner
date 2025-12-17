@@ -2,13 +2,13 @@ import { Layout } from "@/components/layout/Layout";
 import { useStore, Order } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Trash2, Ban } from "lucide-react";
+import { Plus, Search, Trash2, Ban, Printer } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,14 +34,14 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   // Payment Dialog State
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState<"Cash" | "UPI" | "Bank">("Cash");
   const [paymentNote, setPaymentNote] = useState("");
 
   // Filter orders
-  const filteredOrders = store.orders.filter(order => 
+  const filteredOrders = store.orders.filter(order =>
     order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.phone.includes(searchTerm)
@@ -60,13 +60,13 @@ export default function Orders() {
       toast({ title: "Delivery Status Updated" });
     }
   };
-  
+
   const handleAddPayment = () => {
     if (selectedOrder && paymentAmount) {
       store.addOrderPayment(
-        selectedOrder.id, 
-        Number(paymentAmount), 
-        paymentMode, 
+        selectedOrder.id,
+        Number(paymentAmount),
+        paymentMode,
         new Date().toISOString().split('T')[0],
         paymentNote
       );
@@ -118,8 +118,8 @@ export default function Orders() {
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by Phone / Name / ID..." 
+            <Input
+              placeholder="Search by Phone / Name / ID..."
               className="pl-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -159,36 +159,33 @@ export default function Orders() {
                     </TableCell>
                     <TableCell className="text-xs">{order.orderDate}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
-                        order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
+                          order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                        }`}>
                         {order.workStatus}
                       </span>
                     </TableCell>
                     <TableCell>
-                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
                         {order.deliveryStatus}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' :
-                        order.paymentStatus === 'Unpaid' ? 'bg-red-100 text-red-700' :
-                        'bg-orange-100 text-orange-700'
-                      }`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' :
+                          order.paymentStatus === 'Unpaid' ? 'bg-red-100 text-red-700' :
+                            'bg-orange-100 text-orange-700'
+                        }`}>
                         {order.paymentStatus}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-medium">₹{order.totalAmount}</TableCell>
                     <TableCell className="text-right text-muted-foreground">₹{order.balanceAmount}</TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           setSelectedOrder(order);
@@ -216,7 +213,7 @@ export default function Orders() {
                 </span>
               </DialogTitle>
             </DialogHeader>
-            
+
             {selectedOrder && (
               <div className="space-y-6 py-4">
                 {/* Order Items */}
@@ -241,8 +238,8 @@ export default function Orders() {
                         </TableRow>
                       ))}
                       <TableRow>
-                         <TableCell colSpan={3} className="font-bold text-right">Total Order Value</TableCell>
-                         <TableCell className="font-bold text-right">₹{selectedOrder.totalAmount}</TableCell>
+                        <TableCell colSpan={3} className="font-bold text-right">Total Order Value</TableCell>
+                        <TableCell className="font-bold text-right">₹{selectedOrder.totalAmount}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -252,8 +249,8 @@ export default function Orders() {
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                   <div className="space-y-2">
                     <Label>Work Status</Label>
-                    <Select 
-                      defaultValue={selectedOrder.workStatus} 
+                    <Select
+                      defaultValue={selectedOrder.workStatus}
                       onValueChange={handleUpdateWorkStatus}
                     >
                       <SelectTrigger>
@@ -269,7 +266,7 @@ export default function Orders() {
                   </div>
                   <div className="space-y-2">
                     <Label>Delivery Status</Label>
-                    <Select 
+                    <Select
                       defaultValue={selectedOrder.deliveryStatus}
                       onValueChange={handleUpdateDeliveryStatus}
                     >
@@ -288,89 +285,89 @@ export default function Orders() {
 
                 {/* Payment Section */}
                 <div className="space-y-4">
-                   <h3 className="font-semibold border-b pb-2">Payment History</h3>
-                   <Table>
-                     <TableHeader>
-                       <TableRow>
-                         <TableHead>Date</TableHead>
-                         <TableHead>Mode</TableHead>
-                         <TableHead>Note</TableHead>
-                         <TableHead className="text-right">Amount</TableHead>
-                       </TableRow>
-                     </TableHeader>
-                     <TableBody>
-                       {selectedOrder.paymentHistory.map(p => (
-                         <TableRow key={p.id}>
-                           <TableCell>{p.date}</TableCell>
-                           <TableCell>{p.mode}</TableCell>
-                           <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
-                           <TableCell className="text-right">₹{p.amount}</TableCell>
-                         </TableRow>
-                       ))}
-                       <TableRow>
-                         <TableCell colSpan={3} className="font-bold text-right">Total Paid</TableCell>
-                         <TableCell className="font-bold text-right text-green-600">
-                           ₹{selectedOrder.totalAmount - selectedOrder.balanceAmount}
-                         </TableCell>
-                       </TableRow>
-                       <TableRow>
-                         <TableCell colSpan={3} className="font-bold text-right">Balance Due</TableCell>
-                         <TableCell className="font-bold text-right text-red-600">
-                           ₹{selectedOrder.balanceAmount}
-                         </TableCell>
-                       </TableRow>
-                     </TableBody>
-                   </Table>
+                  <h3 className="font-semibold border-b pb-2">Payment History</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Mode</TableHead>
+                        <TableHead>Note</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedOrder.paymentHistory.map(p => (
+                        <TableRow key={p.id}>
+                          <TableCell>{p.date}</TableCell>
+                          <TableCell>{p.mode}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
+                          <TableCell className="text-right">₹{p.amount}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell colSpan={3} className="font-bold text-right">Total Paid</TableCell>
+                        <TableCell className="font-bold text-right text-green-600">
+                          ₹{selectedOrder.totalAmount - selectedOrder.balanceAmount}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={3} className="font-bold text-right">Balance Due</TableCell>
+                        <TableCell className="font-bold text-right text-red-600">
+                          ₹{selectedOrder.balanceAmount}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
 
-                   {selectedOrder.balanceAmount > 0 && (
-                     <div className="bg-muted p-4 rounded-lg space-y-4">
-                       <h4 className="font-medium text-sm">Add Partial Payment</h4>
-                       <div className="grid grid-cols-3 gap-3">
-                         <Input 
-                           placeholder="Amount" 
-                           type="number"
-                           value={paymentAmount}
-                           onChange={(e) => setPaymentAmount(e.target.value)}
-                         />
-                         <Select 
-                           value={paymentMode} 
-                           onValueChange={(v: any) => setPaymentMode(v)}
-                         >
-                           <SelectTrigger>
-                             <SelectValue />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="Cash">Cash</SelectItem>
-                             <SelectItem value="UPI">UPI</SelectItem>
-                             <SelectItem value="Bank">Bank Transfer</SelectItem>
-                           </SelectContent>
-                         </Select>
-                         <Button onClick={handleAddPayment} size="sm">Record</Button>
-                       </div>
-                       <Input 
-                         placeholder="Note (Optional)" 
-                         value={paymentNote}
-                         onChange={(e) => setPaymentNote(e.target.value)}
-                         className="h-8 text-xs"
-                       />
-                     </div>
-                   )}
+                  {selectedOrder.balanceAmount > 0 && (
+                    <div className="bg-muted p-4 rounded-lg space-y-4">
+                      <h4 className="font-medium text-sm">Add Partial Payment</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <Input
+                          placeholder="Amount"
+                          type="number"
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                        />
+                        <Select
+                          value={paymentMode}
+                          onValueChange={(v: any) => setPaymentMode(v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                            <SelectItem value="UPI">UPI</SelectItem>
+                            <SelectItem value="Bank">Bank Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button onClick={handleAddPayment} size="sm">Record</Button>
+                      </div>
+                      <Input
+                        placeholder="Note (Optional)"
+                        value={paymentNote}
+                        onChange={(e) => setPaymentNote(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Destructive Actions */}
                 <div className="flex justify-between pt-6 border-t">
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={handleCancelOrder}
                     disabled={selectedOrder.workStatus === 'Cancelled'}
                   >
                     <Ban className="w-4 h-4 mr-2" /> Cancel Order
                   </Button>
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     onClick={handleDeleteOrder}
                   >

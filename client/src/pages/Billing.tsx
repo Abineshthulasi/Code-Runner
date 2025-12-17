@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Printer } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -77,7 +77,7 @@ export default function Billing() {
       orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       clientName: data.clientName,
       phone: data.phone,
-      items: data.items.map(i => ({...i, id: Math.random().toString()})),
+      items: data.items.map(i => ({ ...i, id: Math.random().toString() })),
       totalAmount,
       initialPayment: data.advanceAmount,
       initialPaymentMode: data.advanceMode,
@@ -102,7 +102,7 @@ export default function Billing() {
           <CardContent className="p-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -166,10 +166,10 @@ export default function Billing() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">Order Items</h3>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => append({ description: "", quantity: 1, price: 0 })}
                     >
                       <Plus className="w-4 h-4 mr-2" /> Add Item
@@ -221,10 +221,10 @@ export default function Billing() {
                         />
                       </div>
                       <div className="col-span-1">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
                           className="text-destructive"
                           onClick={() => remove(index)}
                         >
@@ -242,7 +242,7 @@ export default function Billing() {
                     <span>Subtotal</span>
                     <span className="font-semibold">₹{totalAmount}</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -251,10 +251,10 @@ export default function Billing() {
                         <FormItem>
                           <FormLabel>Advance Payment</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              className="text-right" 
-                              {...field} 
+                            <Input
+                              type="number"
+                              className="text-right"
+                              {...field}
                             />
                           </FormControl>
                         </FormItem>
