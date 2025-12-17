@@ -161,6 +161,19 @@ class ApiClient {
     });
   }
 
+  async updateTransaction(id: string, updates: any): Promise<Transaction> {
+    return this.fetchJson<Transaction>(`/transactions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    return this.fetchJson<void>(`/transactions/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   // Balances
   async getBalances(): Promise<Balance> {
     return this.fetchJson<Balance>("/balances");

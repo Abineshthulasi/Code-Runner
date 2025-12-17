@@ -21,6 +21,8 @@ export interface IStorage {
   // Transactions
   getTransactions(): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  updateTransaction(id: string, updates: Partial<InsertTransaction>): Promise<Transaction>;
+  deleteTransaction(id: string): Promise<void>;
 
   // Balances
   getBalances(): Promise<Balance>;
@@ -131,6 +133,21 @@ export class DbStorage implements IStorage {
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const [transaction] = await db.insert(transactions).values(insertTransaction).returning();
     return transaction;
+  }
+
+  async updateTransaction(id: string, updates: Partial<InsertTransaction>): Promise<Transaction> {
+    const [transaction] = await db
+      .update(transactions)
+      .set(updates)
+      .where(eq(transactions.id, id))
+      .returning();
+
+    if (!transaction) throw new Error("Transaction not found");
+    return transaction;
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    await db.delete(transactions).where(eq(transactions.id, id));
   }
 
   async getBalances(): Promise<Balance> {
@@ -289,6 +306,18 @@ export class MemStorage implements IStorage {
     const transaction: Transaction = { ...insertTransaction, id, createdAt: new Date() };
     this.transactions.set(id, transaction);
     return transaction;
+  }
+
+  async updateTransaction(id: string, updates: Partial<InsertTransaction>): Promise<Transaction> {
+    const existing = this.transactions.get(id);
+    if (!existing) throw new Error("Transaction not found");
+    const updated = { ...existing, ...updates };
+    this.transactions.set(id, updated);
+    return updated;
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    this.transactions.delete(id);
   }
 
   async getBalances(): Promise<Balance> {

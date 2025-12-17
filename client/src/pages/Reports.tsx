@@ -46,7 +46,7 @@ export default function Reports() {
 
   const monthlyReport = useMemo(() => {
     const report: MonthlyData[] = [];
-    
+
     // Get all transactions sorted by date
     const allTransactions: Array<{
       date: string;
@@ -176,6 +176,45 @@ export default function Reports() {
     }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0 });
   }, [monthlyReport]);
 
+  // Balance Adjustment Logic
+  const [adjustingData, setAdjustingData] = useState<{
+    monthIndex: number;
+    year: number;
+    type: 'Bank' | 'Cash';
+    currentBalance: number;
+  } | null>(null);
+  const [newBalance, setNewBalance] = useState("");
+
+  const handleAdjustBalance = async () => {
+    if (!adjustingData || !newBalance) return;
+
+    const diff = Number(newBalance) - adjustingData.currentBalance;
+    if (diff === 0) {
+      setAdjustingData(null);
+      return;
+    }
+
+    // Create adjustment transaction
+    // Date should be end of that month
+    const year = adjustingData.year;
+    const month = adjustingData.monthIndex;
+    const adjustmentDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    const type = diff > 0 ? 'Deposit' : 'Withdraw';
+    const amount = Math.abs(diff);
+
+    await store.addTransaction({
+      description: `Balance Adjustment (${MONTHS[month]})`,
+      amount: amount,
+      type: type,
+      mode: adjustingData.type,
+      date: adjustmentDate
+    });
+
+    setAdjustingData(null);
+    setNewBalance("");
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
@@ -259,7 +298,7 @@ export default function Reports() {
                   {monthlyReport.map((data) => {
                     const netProfit = data.sales - data.expenses;
                     const hasData = data.sales > 0 || data.expenses > 0;
-                    
+
                     return (
                       <TableRow key={data.month} className={!hasData ? 'opacity-50' : ''}>
                         <TableCell className="font-medium">{data.month}</TableCell>
@@ -313,9 +352,49 @@ export default function Reports() {
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
                       <TableCell className="text-right">₹{data.openingBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold">₹{data.closingBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        <div className="flex items-center justify-end gap-2">
+                          ₹{data.closingBank.toLocaleString()}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-50 hover:opacity-100"
+                            onClick={() => {
+                              setAdjustingData({
+                                monthIndex: data.monthIndex,
+                                year: data.year,
+                                type: 'Bank',
+                                currentBalance: data.closingBank
+                              });
+                              setNewBalance(data.closingBank.toString());
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold">₹{data.closingCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        <div className="flex items-center justify-end gap-2">
+                          ₹{data.closingCash.toLocaleString()}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-50 hover:opacity-100"
+                            onClick={() => {
+                              setAdjustingData({
+                                monthIndex: data.monthIndex,
+                                year: data.year,
+                                type: 'Cash',
+                                currentBalance: data.closingCash
+                              });
+                              setNewBalance(data.closingCash.toString());
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         {data.deposits > 0 ? `+₹${data.deposits.toLocaleString()}` : '-'}
                       </TableCell>
@@ -330,6 +409,41 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!adjustingData} onOpenChange={(open) => !open && setAdjustingData(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjust {adjustingData?.type} Balance</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Adjusting the balance will create a transaction to correct the ending balance for {adjustingData ? MONTHS[adjustingData.monthIndex] : ''}.
+            </p>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">New Closing Balance</label>
+              <Input
+                type="number"
+                value={newBalance}
+                onChange={(e) => setNewBalance(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdjustingData(null)}>Cancel</Button>
+            <Button onClick={handleAdjustBalance}>Confirm Adjustment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";

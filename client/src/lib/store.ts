@@ -82,6 +82,8 @@ interface StoreState {
   deleteExpense: (id: string) => Promise<void>;
 
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string, type: string, amount: number, mode: string) => Promise<void>;
 
   // Computeds
   getTotalSales: () => number;
@@ -330,6 +332,47 @@ export const useStore = create<StoreState>((set, get) => ({
         newCash -= amount;
       } else {
         newBank -= amount;
+      }
+    }
+
+    await api.updateBalances({
+      bankBalance: newBank.toString(),
+      cashInHand: newCash.toString(),
+    });
+
+    await get().loadData();
+    await get().loadData();
+  },
+
+  updateTransaction: async (id, updates) => {
+    // Only simple updates supported that don't change balance logic complexity for now
+    await api.updateTransaction(id, updates);
+    await get().loadData();
+  },
+
+  deleteTransaction: async (id, type, amount, mode) => {
+    await api.deleteTransaction(id);
+
+    // Reverse the balance impact
+    const state = get();
+    let newBank = state.bankBalance;
+    let newCash = state.cashInHand;
+
+    const numAmount = Number(amount);
+
+    if (type === 'Deposit') {
+      // Reversing deposit means removing funds
+      if (mode === 'Cash') {
+        newCash -= numAmount;
+      } else {
+        newBank -= numAmount;
+      }
+    } else if (type === 'Withdraw') {
+      // Reversing withdraw means adding funds back
+      if (mode === 'Cash') {
+        newCash += numAmount;
+      } else {
+        newBank += numAmount;
       }
     }
 
