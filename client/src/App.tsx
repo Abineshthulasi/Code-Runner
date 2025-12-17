@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import { useStore } from "@/lib/store";
+import { useEffect } from "react";
 
 import Dashboard from "@/pages/Dashboard";
 import Orders from "@/pages/Orders";
@@ -12,6 +14,12 @@ import Expenses from "@/pages/Expenses";
 import Bank from "@/pages/Bank";
 
 function Router() {
+  const loadData = useStore((state) => state.loadData);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   return (
     <Switch>
       <Route path="/" component={Dashboard}/>
