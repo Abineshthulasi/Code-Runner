@@ -100,7 +100,7 @@ export default function PrintBill() {
                             <span className="font-medium">₹{Number(order.totalAmount).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Advance:</span>
+                            <span className="text-gray-600">{Number(order.balanceAmount) === 0 ? "Paid Amount:" : "Advance:"}</span>
                             <span className="font-medium">- ₹{(Number(order.totalAmount) - Number(order.balanceAmount)).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold border-t border-black pt-3">
