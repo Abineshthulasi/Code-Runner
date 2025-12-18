@@ -192,6 +192,32 @@ export default function Orders() {
     toast({ title: "Payment Updated" });
   };
 
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!selectedOrder) return;
+    if (!confirm("Are you sure you want to delete this payment?")) return;
+
+    const newPaymentHistory = selectedOrder.paymentHistory.filter(p => p.id !== paymentId);
+
+    // Recalculate totals
+    const totalPaid = newPaymentHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+    const newBalance = selectedOrder.totalAmount - totalPaid;
+
+    await store.updateOrder(selectedOrder.id, {
+      paymentHistory: newPaymentHistory,
+      balanceAmount: newBalance,
+      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+    });
+
+    setSelectedOrder({
+      ...selectedOrder,
+      paymentHistory: newPaymentHistory,
+      balanceAmount: newBalance,
+      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+    });
+
+    toast({ title: "Payment Deleted", variant: "destructive" });
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -529,9 +555,12 @@ export default function Orders() {
                               <TableCell>{p.mode}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
                               <TableCell className="text-right">₹{p.amount}</TableCell>
-                              <TableCell className="w-10">
+                              <TableCell className="w-20 text-right">
                                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEditPayment(p)}>
                                   <Edit2 className="w-3 h-3" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeletePayment(p.id)}>
+                                  <Trash2 className="w-3 h-3" />
                                 </Button>
                               </TableCell>
                             </>
