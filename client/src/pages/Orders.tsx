@@ -44,6 +44,10 @@ export default function Orders() {
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [editedItems, setEditedItems] = useState<{ id: string; description: string; quantity: number; price: number }[]>([]);
 
+  // Payment Editing State
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [editedPaymentData, setEditedPaymentData] = useState<any>(null);
+
   // Filter orders
   const filteredOrders = store.orders.filter(order =>
     order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,6 +156,40 @@ export default function Orders() {
 
   const addEditedItem = () => {
     setEditedItems([...editedItems, { id: Math.random().toString(), description: "", quantity: 1, price: 0 }]);
+  };
+
+  const handleStartEditPayment = (payment: any) => {
+    setEditingPaymentId(payment.id);
+    setEditedPaymentData({ ...payment });
+  };
+
+  const handleSavePayment = async () => {
+    if (!selectedOrder || !editedPaymentData) return;
+
+    const newPaymentHistory = selectedOrder.paymentHistory.map(p =>
+      p.id === editingPaymentId ? { ...editedPaymentData, amount: Number(editedPaymentData.amount) } : p
+    );
+
+    // Recalculate totals
+    const totalPaid = newPaymentHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+    const newBalance = selectedOrder.totalAmount - totalPaid;
+
+    await store.updateOrder(selectedOrder.id, {
+      paymentHistory: newPaymentHistory,
+      balanceAmount: newBalance,
+      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+    });
+
+    setSelectedOrder({
+      ...selectedOrder,
+      paymentHistory: newPaymentHistory,
+      balanceAmount: newBalance,
+      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+    });
+
+    setEditingPaymentId(null);
+    setEditedPaymentData(null);
+    toast({ title: "Payment Updated" });
   };
 
   return (
@@ -433,10 +471,71 @@ export default function Orders() {
                     <TableBody>
                       {selectedOrder.paymentHistory.map(p => (
                         <TableRow key={p.id}>
-                          <TableCell>{p.date}</TableCell>
-                          <TableCell>{p.mode}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
-                          <TableCell className="text-right">₹{p.amount}</TableCell>
+                          {editingPaymentId === p.id ? (
+                            <>
+                              <TableCell>
+                                <Input
+                                  type="date"
+                                  value={editedPaymentData.date}
+                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, date: e.target.value })}
+                                  className="h-8 w-32"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={editedPaymentData.mode}
+                                  onValueChange={(v) => setEditedPaymentData({ ...editedPaymentData, mode: v })}
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Cash">Cash</SelectItem>
+                                    <SelectItem value="UPI">UPI</SelectItem>
+                                    <SelectItem value="Bank">Bank</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={editedPaymentData.note}
+                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, note: e.target.value })}
+                                  className="h-8 text-xs"
+                                  placeholder="Note"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  value={editedPaymentData.amount}
+                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, amount: e.target.value })}
+                                  className="h-8 w-24 text-right ml-auto"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSavePayment}>
+                                    <Save className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingPaymentId(null)}>
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell>{p.date}</TableCell>
+                              <TableCell>{p.mode}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
+                              <TableCell className="text-right">₹{p.amount}</TableCell>
+                              <TableCell className="w-10">
+                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEditPayment(p)}>
+                                  <Edit2 className="w-3 h-3" />
+                                </Button>
+                              </TableCell>
+                            </>
+                          )}
                         </TableRow>
                       ))}
                       <TableRow>
