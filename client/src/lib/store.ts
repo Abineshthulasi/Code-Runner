@@ -214,6 +214,33 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   deleteOrder: async (id) => {
+    const state = get();
+    const order = state.orders.find(o => o.id === id);
+
+    if (order) {
+      let newBank = state.bankBalance;
+      let newCash = state.cashInHand;
+      let balanceChanged = false;
+
+      // Reverse all payments in history
+      order.paymentHistory.forEach(p => {
+        const amount = Number(p.amount);
+        if (p.mode === 'Cash') {
+          newCash -= amount;
+        } else {
+          newBank -= amount;
+        }
+        balanceChanged = true;
+      });
+
+      if (balanceChanged) {
+        await api.updateBalances({
+          bankBalance: newBank.toString(),
+          cashInHand: newCash.toString(),
+        });
+      }
+    }
+
     await api.deleteOrder(id);
     await get().loadData();
   },
