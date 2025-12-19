@@ -15,6 +15,7 @@ import Bank from "@/pages/Bank";
 import Reports from "@/pages/Reports";
 import PrintBill from "@/pages/PrintBill";
 import AuthPage from "@/pages/Auth";
+import Users from "@/pages/Users";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -51,6 +52,7 @@ function Router() {
       <ProtectedRoute path="/expenses" component={Expenses} />
       <ProtectedRoute path="/bank" component={Bank} />
       <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/users" component={Users} />
       <ProtectedRoute path="/print-bill/:id" component={PrintBill} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

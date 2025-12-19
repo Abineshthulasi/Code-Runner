@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Users } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
@@ -19,11 +21,19 @@ const NAV_ITEMS = [
   { label: "Billing", icon: Receipt, href: "/billing" },
   { label: "Expenses", icon: Wallet, href: "/expenses" },
   { label: "Bank", icon: Building2, href: "/bank" },
+  { label: "Bank", icon: Building2, href: "/bank" },
   { label: "Reports", icon: FileBarChart, href: "/reports" },
+  // Users link handled dynamically
 ];
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
+
+  const items = [...NAV_ITEMS];
+  if (user?.role === 'admin') {
+    items.push({ label: "Users", icon: Users, href: "/users" });
+  }
 
   return (
     <div className="h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col fixed left-0 top-0 hidden md:flex">
@@ -35,7 +45,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive = location === item.href;
           return (
             <Link key={item.href} href={item.href}>
@@ -67,6 +77,12 @@ export function Sidebar() {
 export function MobileSidebar() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+
+  const items = [...NAV_ITEMS];
+  if (user?.role === 'admin') {
+    items.push({ label: "Users", icon: Users, href: "/users" });
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -82,7 +98,7 @@ export function MobileSidebar() {
           </h1>
         </div>
         <nav className="flex-1 p-4 space-y-1">
-          {NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
               <a
                 className={cn(

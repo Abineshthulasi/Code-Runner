@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -21,8 +21,47 @@ export async function registerRoutes(
   const requireManagerOrAbove = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!['admin', 'manager'].includes(req.user.role)) return res.sendStatus(403);
+    if (!['admin', 'manager'].includes(req.user.role)) return res.sendStatus(403);
     next();
   };
+
+  // ===== USERS (Admin Only) =====
+  app.get("/api/users", requireAdmin, async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const hashedPassword = await hashPassword(req.body.password);
+      const user = await storage.createUser({
+        ...req.body,
+        password: hashedPassword,
+      });
+
+      res.status(201).json(user);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUser(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
 
   // ===== ORDERS =====
   app.get("/api/orders", async (_req, res) => {
