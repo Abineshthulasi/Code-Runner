@@ -25,6 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { StaffDashboard } from "./StaffDashboard";
+import { ManagerDashboard } from "./ManagerDashboard";
 
 export default function Dashboard() {
   const store = useStore();
@@ -33,6 +34,10 @@ export default function Dashboard() {
 
   if (user?.role === 'staff') {
     return <StaffDashboard />;
+  }
+
+  if (user?.role === 'manager') {
+    return <ManagerDashboard />;
   }
 
   // Local state for quick actions
