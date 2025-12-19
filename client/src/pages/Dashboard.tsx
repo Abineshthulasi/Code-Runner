@@ -136,7 +136,7 @@ export default function Dashboard() {
         </div>
 
         {view === 'manager' ? (
-          <ManagerDashboard disableLayout={true} />
+          <ManagerDashboard disableLayout={true} hideToggle={true} />
         ) : view === 'staff' ? (
           <StaffDashboard disableLayout={true} />
         ) : (

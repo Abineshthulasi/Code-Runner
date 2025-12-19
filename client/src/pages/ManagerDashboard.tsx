@@ -15,7 +15,7 @@ import { StaffDashboard } from "./StaffDashboard";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export function ManagerDashboard({ disableLayout = false }: { disableLayout?: boolean }) {
+export function ManagerDashboard({ disableLayout = false, hideToggle = false }: { disableLayout?: boolean, hideToggle?: boolean }) {
     const [view, setView] = useState<'manager' | 'staff'>('manager');
     const store = useStore();
     const now = new Date();
@@ -74,23 +74,25 @@ export function ManagerDashboard({ disableLayout = false }: { disableLayout?: bo
                     <h2 className="text-3xl font-bold tracking-tight">Manager Dashboard</h2>
                     <p className="text-muted-foreground mt-1">Overview for {now.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                 </div>
-                <div className="flex bg-muted p-1 rounded-lg">
-                    <Button
-                        variant={view === 'manager' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setView('manager')}
-                        className="bg-background text-foreground shadow-sm hover:bg-background/90"
-                    >
-                        Overview
-                    </Button>
-                    <Button
-                        variant={view === 'staff' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setView('staff')}
-                    >
-                        Staff View
-                    </Button>
-                </div>
+                {!hideToggle && (
+                    <div className="flex bg-muted p-1 rounded-lg">
+                        <Button
+                            variant={view === 'manager' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setView('manager')}
+                            className="bg-background text-foreground shadow-sm hover:bg-background/90"
+                        >
+                            Overview
+                        </Button>
+                        <Button
+                            variant={view === 'staff' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setView('staff')}
+                        >
+                            Staff View
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {view === 'staff' ? (
