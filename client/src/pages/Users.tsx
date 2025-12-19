@@ -41,6 +41,7 @@ export default function Users() {
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [open, setOpen] = useState(false);
 
     const { data: users, isLoading } = useQuery<User[]>({
         queryKey: ["/api/users"],
@@ -254,10 +255,24 @@ export default function Users() {
                                         </FormItem>
                                     )}
                                 />
-                                <Button2 type="submit" className="w-full" disabled={createUserMutation.isPending || updateUserMutation.isPending}>
-                                    {(createUserMutation.isPending || updateUserMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {editingUser ? "Update User" : "Create Account"}
-                                </Button2>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            setEditingUser(null);
+                                            form.reset();
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button2 type="submit" className="w-full" disabled={createUserMutation.isPending || updateUserMutation.isPending}>
+                                        {(createUserMutation.isPending || updateUserMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {editingUser ? "Update User" : "Create Account"}
+                                    </Button2>
+                                </div>
                             </form>
                         </Form>
                     </DialogContent>
