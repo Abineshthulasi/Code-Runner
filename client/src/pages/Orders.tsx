@@ -166,28 +166,39 @@ export default function Orders() {
   const handleSavePayment = async () => {
     if (!selectedOrder || !editedPaymentData) return;
 
+    // Refresh data to ensure balances are up to date
+    await store.loadData();
+
     // Find original payment to calculate balance adjustments
+    // We must find it in the FRESH store data if possible, or use selectedOrder (which might be slightly stale but has the ID)
+    // Actually, selectedOrder is local state. We should trust it for the ID.
     const originalPayment = selectedOrder.paymentHistory.find(p => p.id === editingPaymentId);
+
     if (originalPayment) {
       let newBank = store.bankBalance;
       let newCash = store.cashInHand;
 
+      // Ensure we work with numbers
+      const oldAmount = Number(originalPayment.amount);
+      const newAmount = Number(editedPaymentData.amount);
+
       // 1. Reverse original payment
       if (originalPayment.mode === 'Cash') {
-        newCash -= Number(originalPayment.amount);
+        newCash -= oldAmount;
       } else {
-        newBank -= Number(originalPayment.amount);
+        newBank -= oldAmount;
       }
 
       // 2. Apply new payment
       if (editedPaymentData.mode === 'Cash') {
-        newCash += Number(editedPaymentData.amount);
+        newCash += newAmount;
       } else {
-        newBank += Number(editedPaymentData.amount);
+        newBank += newAmount;
       }
 
       // 3. Update balances if changed
-      if (newBank !== store.bankBalance || newCash !== store.cashInHand) {
+      // Always update if there's any change in amounts or mode
+      if (originalPayment.amount !== editedPaymentData.amount || originalPayment.mode !== editedPaymentData.mode) {
         await store.updateBalances({
           bankBalance: newBank.toString(),
           cashInHand: newCash.toString(),
