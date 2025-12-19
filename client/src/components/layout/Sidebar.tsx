@@ -6,7 +6,8 @@ import {
   Wallet,
   Building2,
   Menu,
-  FileBarChart
+  FileBarChart,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -25,7 +26,7 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
 
   const items = [...NAV_ITEMS];
 
@@ -69,9 +70,18 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-center text-muted-foreground">
+        <p className="text-xs text-center text-muted-foreground mb-4">
           © 2025 Bobiz Designer Studio
         </p>
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-3 bg-sidebar-accent/10 border-sidebar-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
+          onClick={() => logoutMutation.mutate()}
+          disabled={logoutMutation.isPending}
+        >
+          <LogOut className="w-5 h-5" />
+          Log Out
+        </Button>
       </div>
     </div>
   );
@@ -80,7 +90,7 @@ export function Sidebar() {
 export function MobileSidebar() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
 
   const items = [...NAV_ITEMS];
 
@@ -123,6 +133,21 @@ export function MobileSidebar() {
             </Link>
           ))}
         </nav>
+
+        <div className="p-4 border-t border-sidebar-border mt-auto">
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-3 bg-sidebar-accent/10 border-sidebar-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
+            onClick={() => {
+              setOpen(false);
+              logoutMutation.mutate();
+            }}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );
