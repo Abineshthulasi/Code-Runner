@@ -121,7 +121,13 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/orders/:id", requireManagerOrAbove, async (req, res) => {
+  // Middleware for Staff or above (basically just authenticated)
+  const requireStaffOrAbove = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    next();
+  };
+
+  app.patch("/api/orders/:id", requireStaffOrAbove, async (req, res) => {
     try {
       const order = await storage.updateOrder(req.params.id, req.body);
       res.json(order);
