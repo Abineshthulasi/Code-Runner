@@ -4,7 +4,8 @@ import { rm, readFile } from "fs/promises";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
-"@google/generative-ai",
+const allowlist = [
+  "@google/generative-ai",
   "axios",
   "cors",
   "date-fns",
