@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format, isSameDay, parseISO, isBefore, startOfDay } from "date-fns";
 
-export function StaffDashboard() {
+export function StaffDashboard({ disableLayout = false }: { disableLayout?: boolean }) {
     const store = useStore();
     const today = startOfDay(new Date());
 
@@ -107,48 +107,54 @@ export function StaffDashboard() {
         </Card>
     );
 
+    const content = (
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-3xl font-bold tracking-tight">Staff Dashboard</h2>
+                <p className="text-muted-foreground">Overview of daily tasks and deliveries.</p>
+            </div>
+
+            {/* Priority: Due Today & Outstanding */}
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card className="border-l-4 border-l-blue-500">
+                    <CardHeader>
+                        <CardTitle className="text-blue-700">Due for Delivery Today</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold">{dueTodayOrders.length}</div>
+                        <p className="text-sm text-muted-foreground">Orders must be delivered by EOD.</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-l-4 border-l-red-500">
+                    <CardHeader>
+                        <CardTitle className="text-red-700">Outstanding / Overdue</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold">{outstandingOrders.length}</div>
+                        <p className="text-sm text-muted-foreground">Orders past their due date.</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <OrderTable orders={dueTodayOrders} title="🚨 Need to Delivery Today" emptyMsg="No deliveries scheduled for today." />
+
+            <OrderTable orders={outstandingOrders} title="⚠️ Outstanding Deliveries" emptyMsg="No overdue orders." />
+
+            <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
+
+            <OrderTable orders={recentOrders} title="📝 Recently Taken Orders" emptyMsg="No recent orders." />
+
+            <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." />
+
+        </div>
+    );
+
+    if (disableLayout) return content;
+
     return (
         <Layout>
-            <div className="space-y-6">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Staff Dashboard</h2>
-                    <p className="text-muted-foreground">Overview of daily tasks and deliveries.</p>
-                </div>
-
-                {/* Priority: Due Today & Outstanding */}
-                <div className="grid gap-6 md:grid-cols-2">
-                    <Card className="border-l-4 border-l-blue-500">
-                        <CardHeader>
-                            <CardTitle className="text-blue-700">Due for Delivery Today</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{dueTodayOrders.length}</div>
-                            <p className="text-sm text-muted-foreground">Orders must be delivered by EOD.</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-l-4 border-l-red-500">
-                        <CardHeader>
-                            <CardTitle className="text-red-700">Outstanding / Overdue</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{outstandingOrders.length}</div>
-                            <p className="text-sm text-muted-foreground">Orders past their due date.</p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <OrderTable orders={dueTodayOrders} title="🚨 Need to Delivery Today" emptyMsg="No deliveries scheduled for today." />
-
-                <OrderTable orders={outstandingOrders} title="⚠️ Outstanding Deliveries" emptyMsg="No overdue orders." />
-
-                <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
-
-                <OrderTable orders={recentOrders} title="📝 Recently Taken Orders" emptyMsg="No recent orders." />
-
-                <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." />
-
-            </div>
+            {content}
         </Layout>
     );
 }

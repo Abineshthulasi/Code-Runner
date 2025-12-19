@@ -93,7 +93,7 @@ export function ManagerDashboard() {
                 </div>
 
                 {view === 'staff' ? (
-                    <StaffDashboard />
+                    <StaffDashboard disableLayout={true} />
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {/* Total Sales */}
