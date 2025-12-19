@@ -21,9 +21,7 @@ const NAV_ITEMS = [
   { label: "Billing", icon: Receipt, href: "/billing" },
   { label: "Expenses", icon: Wallet, href: "/expenses" },
   { label: "Bank", icon: Building2, href: "/bank" },
-  { label: "Bank", icon: Building2, href: "/bank" },
-  { label: "Reports", icon: FileBarChart, href: "/reports" },
-  // Users link handled dynamically
+  // Reports and Users handled dynamically
 ];
 
 export function Sidebar() {
@@ -31,6 +29,11 @@ export function Sidebar() {
   const { user } = useAuth();
 
   const items = [...NAV_ITEMS];
+
+  if (user?.role === 'admin' || user?.role === 'manager') {
+    items.push({ label: "Reports", icon: FileBarChart, href: "/reports" });
+  }
+
   if (user?.role === 'admin') {
     items.push({ label: "Users", icon: Users, href: "/users" });
   }
@@ -80,6 +83,11 @@ export function MobileSidebar() {
   const { user } = useAuth();
 
   const items = [...NAV_ITEMS];
+
+  if (user?.role === 'admin' || user?.role === 'manager') {
+    items.push({ label: "Reports", icon: FileBarChart, href: "/reports" });
+  }
+
   if (user?.role === 'admin') {
     items.push({ label: "Users", icon: Users, href: "/users" });
   }
