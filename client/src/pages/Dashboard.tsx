@@ -23,10 +23,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Dashboard() {
   const store = useStore();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Local state for quick actions
   const [depositAmount, setDepositAmount] = useState("");
@@ -99,9 +101,11 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Bank Balance</CardTitle>
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="h-4 w-4" onClick={handleEditBalanceOpen}>
-                  <Pencil className="h-3 w-3" />
-                </Button>
+                {user?.role === 'admin' && (
+                  <Button variant="ghost" size="icon" className="h-4 w-4" onClick={handleEditBalanceOpen}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </div>
             </CardHeader>
@@ -153,9 +157,11 @@ export default function Dashboard() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">Cash In Hand</CardTitle>
-                <Button variant="ghost" size="icon" className="h-4 w-4 -mr-2" onClick={handleEditBalanceOpen}>
-                  <Pencil className="h-3 w-3" />
-                </Button>
+                {user?.role === 'admin' && (
+                  <Button variant="ghost" size="icon" className="h-4 w-4 -mr-2" onClick={handleEditBalanceOpen}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -207,39 +213,41 @@ export default function Dashboard() {
           </div>
 
           {/* Withdraw */}
-          <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-red-600">
-              <Minus className="w-5 h-5" /> Withdraw Amount
-            </h3>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Button
-                  variant={withdrawMode === 'Cash' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setWithdrawMode('Cash')}
-                  className={withdrawMode === 'Cash' ? 'bg-red-600 hover:bg-red-700' : ''}
-                >Cash</Button>
-                <Button
-                  variant={withdrawMode === 'Bank' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setWithdrawMode('Bank')}
-                  className={withdrawMode === 'Bank' ? 'bg-red-600 hover:bg-red-700' : ''}
-                >Bank</Button>
+          {user?.role === 'admin' && (
+            <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-red-600">
+                <Minus className="w-5 h-5" /> Withdraw Amount
+              </h3>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    variant={withdrawMode === 'Cash' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setWithdrawMode('Cash')}
+                    className={withdrawMode === 'Cash' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  >Cash</Button>
+                  <Button
+                    variant={withdrawMode === 'Bank' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setWithdrawMode('Bank')}
+                    className={withdrawMode === 'Bank' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  >Bank</Button>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Type Amount"
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                  />
+                  <Button onClick={handleWithdraw} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                    Enter
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Withdrawing from: {withdrawMode === 'Cash' ? 'Cash in Hand' : 'Bank Balance'}</p>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Type Amount"
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                />
-                <Button onClick={handleWithdraw} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                  Enter
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">Withdrawing from: {withdrawMode === 'Cash' ? 'Cash in Hand' : 'Bank Balance'}</p>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Recent Lists */}

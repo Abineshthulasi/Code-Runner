@@ -27,9 +27,11 @@ import { Label } from "@/components/ui/label";
 import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Orders() {
   const store = useStore();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -422,20 +424,22 @@ export default function Orders() {
                 <div className="bg-muted/30 rounded-lg p-4 border">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="font-semibold text-sm">Order Items</h3>
-                    {!isEditingItems ? (
-                      <Button variant="ghost" size="sm" onClick={handleStartEditItems} className="h-8">
-                        <Edit2 className="w-3 h-3 mr-2" /> Edit Items
-                      </Button>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setIsEditingItems(false)} className="h-8 text-muted-foreground">
-                          <X className="w-3 h-3 mr-2" /> Cancel
+                    {user?.role === 'admin' || user?.role === 'manager' ? (
+                      !isEditingItems ? (
+                        <Button variant="ghost" size="sm" onClick={handleStartEditItems} className="h-8">
+                          <Edit2 className="w-3 h-3 mr-2" /> Edit Items
                         </Button>
-                        <Button size="sm" onClick={handleSaveItems} className="h-8">
-                          <Save className="w-3 h-3 mr-2" /> Save
-                        </Button>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setIsEditingItems(false)} className="h-8 text-muted-foreground">
+                            <X className="w-3 h-3 mr-2" /> Cancel
+                          </Button>
+                          <Button size="sm" onClick={handleSaveItems} className="h-8">
+                            <Save className="w-3 h-3 mr-2" /> Save
+                          </Button>
+                        </div>
+                      )
+                    ) : null}
                   </div>
 
                   <Table>
@@ -635,9 +639,11 @@ export default function Orders() {
                                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEditPayment(p)}>
                                   <Edit2 className="w-3 h-3" />
                                 </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeletePayment(p.id)}>
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
+                                {(user?.role === 'admin' || user?.role === 'manager') && (
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeletePayment(p.id)}>
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
                               </TableCell>
                             </>
                           )}
@@ -704,14 +710,16 @@ export default function Orders() {
                     <Ban className="w-4 h-4 mr-2" /> Cancel Order
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={handleDeleteOrder}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" /> Delete Permanently
-                  </Button>
+                  {user?.role === 'admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={handleDeleteOrder}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete Permanently
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t">

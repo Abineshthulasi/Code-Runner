@@ -29,11 +29,13 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Expenses() {
   const store = useStore();
+  const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Materials");
   const [amount, setAmount] = useState("");
@@ -64,7 +66,7 @@ export default function Expenses() {
     });
 
     toast({ title: "Expense Added", description: "Expense logged successfully." });
-    
+
     // Reset form
     setDescription("");
     setAmount("");
@@ -113,8 +115,8 @@ export default function Expenses() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Description</Label>
-                  <Input 
-                    placeholder="e.g., Fabric Purchase" 
+                  <Input
+                    placeholder="e.g., Fabric Purchase"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
@@ -139,17 +141,17 @@ export default function Expenses() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Amount</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00" 
+                  <Input
+                    type="number"
+                    placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                   />
@@ -158,9 +160,9 @@ export default function Expenses() {
 
               <div className="space-y-3">
                 <Label>Mode of Payment</Label>
-                <RadioGroup 
-                  defaultValue="Cash" 
-                  value={mode} 
+                <RadioGroup
+                  defaultValue="Cash"
+                  value={mode}
                   onValueChange={(val: "Cash" | "UPI" | "Bank") => setMode(val)}
                   className="flex gap-6"
                 >
@@ -195,57 +197,59 @@ export default function Expenses() {
             </div>
           </CardHeader>
           <CardContent>
-             <Table>
-               <TableHeader>
-                 <TableRow>
-                   <TableHead>DATE</TableHead>
-                   <TableHead>CATEGORY</TableHead>
-                   <TableHead>DETAILS</TableHead>
-                   <TableHead>MODE</TableHead>
-                   <TableHead className="text-right">AMOUNT</TableHead>
-                   <TableHead className="text-right">ACTIONS</TableHead>
-                 </TableRow>
-               </TableHeader>
-               <TableBody>
-                 {store.expenses.length === 0 ? (
-                   <TableRow>
-                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                       No expenses recorded
-                     </TableCell>
-                   </TableRow>
-                 ) : (
-                   store.expenses.map((expense) => (
-                     <TableRow key={expense.id}>
-                       <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                       <TableCell>{expense.category}</TableCell>
-                       <TableCell>{expense.description}</TableCell>
-                       <TableCell>{expense.mode}</TableCell>
-                       <TableCell className="text-right font-medium">₹{expense.amount}</TableCell>
-                       <TableCell className="text-right flex justify-end gap-2">
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-8 w-8 p-0"
-                           onClick={() => openEditDialog(expense)}
-                         >
-                           <span className="sr-only">Edit</span>
-                           <Pencil className="h-4 w-4" />
-                         </Button>
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="text-destructive h-8 w-8 p-0"
-                           onClick={() => store.deleteExpense(expense.id)}
-                         >
-                           <span className="sr-only">Delete</span>
-                           &times;
-                         </Button>
-                       </TableCell>
-                     </TableRow>
-                   ))
-                 )}
-               </TableBody>
-             </Table>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>DATE</TableHead>
+                  <TableHead>CATEGORY</TableHead>
+                  <TableHead>DETAILS</TableHead>
+                  <TableHead>MODE</TableHead>
+                  <TableHead className="text-right">AMOUNT</TableHead>
+                  <TableHead className="text-right">ACTIONS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {store.expenses.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No expenses recorded
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  store.expenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{expense.category}</TableCell>
+                      <TableCell>{expense.description}</TableCell>
+                      <TableCell>{expense.mode}</TableCell>
+                      <TableCell className="text-right font-medium">₹{expense.amount}</TableCell>
+                      <TableCell className="text-right flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => openEditDialog(expense)}
+                        >
+                          <span className="sr-only">Edit</span>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {(user?.role === 'admin' || user?.role === 'manager') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive h-8 w-8 p-0"
+                            onClick={() => store.deleteExpense(expense.id)}
+                          >
+                            <span className="sr-only">Delete</span>
+                            &times;
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
@@ -259,7 +263,7 @@ export default function Expenses() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Description</Label>
-                  <Input 
+                  <Input
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                   />
@@ -284,16 +288,16 @@ export default function Expenses() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Amount</Label>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     value={editDate}
                     onChange={(e) => setEditDate(e.target.value)}
                   />
@@ -302,8 +306,8 @@ export default function Expenses() {
 
               <div className="space-y-3">
                 <Label>Mode of Payment</Label>
-                <RadioGroup 
-                  value={editMode} 
+                <RadioGroup
+                  value={editMode}
                   onValueChange={(val: "Cash" | "UPI" | "Bank") => setEditMode(val)}
                   className="flex gap-6"
                 >
