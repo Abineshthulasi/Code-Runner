@@ -1,9 +1,21 @@
-import { orders, expenses, transactions, balances } from "@shared/schema";
-import type { Order, InsertOrder, Expense, InsertExpense, Transaction, InsertTransaction, Balance } from "@shared/schema";
+import { orders, expenses, transactions, balances, users } from "@shared/schema";
+import type { Order, InsertOrder, Expense, InsertExpense, Transaction, InsertTransaction, Balance, User, InsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
+export interface IUser {
+  id: number;
+  username: string;
+  password: string;
+  role: string | null;
+}
+
 export interface IStorage {
+  sessionStore: any;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+
   // Orders
   getOrders(): Promise<Order[]>;
   getOrderById(id: string): Promise<Order | undefined>;
@@ -29,7 +41,37 @@ export interface IStorage {
   updateBalances(updates: { bankBalance?: string; cashInHand?: string }): Promise<Balance>;
 }
 
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
+
 export class DbStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
   async getOrders(): Promise<Order[]> {
     return await db.select().from(orders).orderBy(desc(orders.createdAt));
   }
@@ -182,12 +224,17 @@ export class DbStorage implements IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User>;
   private orders: Map<string, Order>;
   private expenses: Map<string, Expense>;
   private transactions: Map<string, Transaction>;
   private balance: Balance;
-
+  sessionStore: session.Store;
+  currentId: number;
   constructor() {
+    this.users = new Map();
+    this.currentId = 1;
+    this.sessionStore = new session.MemoryStore();
     this.orders = new Map();
     this.expenses = new Map();
     this.transactions = new Map();
@@ -197,6 +244,23 @@ export class MemStorage implements IStorage {
       cashInHand: "5000",
       updatedAt: new Date()
     };
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username,
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.currentId++;
+    const user: User = { ...insertUser, id, createdAt: new Date() };
+    this.users.set(id, user);
+    return user;
   }
 
   async getOrders(): Promise<Order[]> {

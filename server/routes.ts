@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth } from "./auth";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -8,6 +9,20 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  setupAuth(app);
+
+  // Middleware to check for role-based permissions
+  const requireAdmin = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    next();
+  };
+
+  const requireManagerOrAbove = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!['admin', 'manager'].includes(req.user.role)) return res.sendStatus(403);
+    next();
+  };
 
   // ===== ORDERS =====
   app.get("/api/orders", async (_req, res) => {
@@ -40,7 +55,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/orders/:id", async (req, res) => {
+  app.patch("/api/orders/:id", requireManagerOrAbove, async (req, res) => {
     try {
       const order = await storage.updateOrder(req.params.id, req.body);
       res.json(order);
@@ -49,7 +64,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/orders/:id", async (req, res) => {
+  app.delete("/api/orders/:id", requireAdmin, async (req, res) => {
     try {
       await storage.deleteOrder(req.params.id);
       res.status(204).send();
@@ -78,7 +93,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/expenses", async (req, res) => {
+  app.post("/api/expenses", requireManagerOrAbove, async (req, res) => {
     try {
       const expense = await storage.createExpense(req.body);
       res.status(201).json(expense);
@@ -87,7 +102,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/expenses/:id", async (req, res) => {
+  app.patch("/api/expenses/:id", requireManagerOrAbove, async (req, res) => {
     try {
       const expense = await storage.updateExpense(req.params.id, req.body);
       res.json(expense);
@@ -96,7 +111,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/expenses/:id", async (req, res) => {
+  app.delete("/api/expenses/:id", requireManagerOrAbove, async (req, res) => {
     try {
       await storage.deleteExpense(req.params.id);
       res.status(204).send();

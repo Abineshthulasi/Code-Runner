@@ -60,6 +60,14 @@ export const balances = pgTable("balances", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const users = pgTable("users", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  username: text("username").unique().notNull(),
+  password: text("password").notNull(),
+  role: text("role", { enum: ["admin", "manager", "staff"] }).notNull().default("staff"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
   createdAt: true,
@@ -75,6 +83,12 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  role: true,
+});
+
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 
@@ -83,5 +97,8 @@ export type Expense = typeof expenses.$inferSelect;
 
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 export type Balance = typeof balances.$inferSelect;
