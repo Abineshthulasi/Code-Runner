@@ -51,17 +51,10 @@ export function ManagerDashboard() {
     store.orders.forEach(order => {
         order.paymentHistory.forEach(payment => {
             if (isCurrentMonth(payment.date)) {
-                if (payment.mode === 'Bank' || payment.mode === 'UPI') { // Assuming UPI goes to Bank? Usually yes.
-                    // Wait, Store has 'Bank', 'Cash', 'UPI'. User asked "Received in Bank" and "Received in Cash".
-                    // I should probably group UPI with Bank, or just Bank. 
-                    // Let's assume UPI -> Bank for "Bank" total, but maybe user distinguishes?
-                    // The user specifically said "sales amount in received in bank" and "sales amount receive in cash".
-                    // I'll group UPI with Bank as it's digital. 
-                    if (payment.mode === 'Cash') {
-                        receivedCash += Number(payment.amount);
-                    } else {
-                        receivedBank += Number(payment.amount);
-                    }
+                if (payment.mode === 'Cash') {
+                    receivedCash += Number(payment.amount);
+                } else if (payment.mode === 'Bank' || payment.mode === 'UPI') {
+                    receivedBank += Number(payment.amount);
                 }
             }
         });
