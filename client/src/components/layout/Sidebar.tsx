@@ -20,8 +20,7 @@ const NAV_ITEMS = [
   { label: "Orders", icon: ShoppingBag, href: "/orders" },
   { label: "Billing", icon: Receipt, href: "/billing" },
   { label: "Expenses", icon: Wallet, href: "/expenses" },
-  { label: "Bank", icon: Building2, href: "/bank" },
-  // Reports and Users handled dynamically
+  // Bank, Reports and Users handled dynamically
 ];
 
 export function Sidebar() {
@@ -31,6 +30,7 @@ export function Sidebar() {
   const items = [...NAV_ITEMS];
 
   if (user?.role === 'admin' || user?.role === 'manager') {
+    items.push({ label: "Bank", icon: Building2, href: "/bank" });
     items.push({ label: "Reports", icon: FileBarChart, href: "/reports" });
   }
 
@@ -85,6 +85,7 @@ export function MobileSidebar() {
   const items = [...NAV_ITEMS];
 
   if (user?.role === 'admin' || user?.role === 'manager') {
+    items.push({ label: "Bank", icon: Building2, href: "/bank" });
     items.push({ label: "Reports", icon: FileBarChart, href: "/reports" });
   }
 

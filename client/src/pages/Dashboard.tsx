@@ -24,11 +24,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { StaffDashboard } from "./StaffDashboard";
 
 export default function Dashboard() {
   const store = useStore();
   const { toast } = useToast();
   const { user } = useAuth();
+
+  if (user?.role === 'staff') {
+    return <StaffDashboard />;
+  }
 
   // Local state for quick actions
   const [depositAmount, setDepositAmount] = useState("");
