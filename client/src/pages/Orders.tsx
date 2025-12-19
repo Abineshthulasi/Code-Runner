@@ -166,6 +166,35 @@ export default function Orders() {
   const handleSavePayment = async () => {
     if (!selectedOrder || !editedPaymentData) return;
 
+    // Find original payment to calculate balance adjustments
+    const originalPayment = selectedOrder.paymentHistory.find(p => p.id === editingPaymentId);
+    if (originalPayment) {
+      let newBank = store.bankBalance;
+      let newCash = store.cashInHand;
+
+      // 1. Reverse original payment
+      if (originalPayment.mode === 'Cash') {
+        newCash -= Number(originalPayment.amount);
+      } else {
+        newBank -= Number(originalPayment.amount);
+      }
+
+      // 2. Apply new payment
+      if (editedPaymentData.mode === 'Cash') {
+        newCash += Number(editedPaymentData.amount);
+      } else {
+        newBank += Number(editedPaymentData.amount);
+      }
+
+      // 3. Update balances if changed
+      if (newBank !== store.bankBalance || newCash !== store.cashInHand) {
+        await store.updateBalances({
+          bankBalance: newBank.toString(),
+          cashInHand: newCash.toString(),
+        });
+      }
+    }
+
     const newPaymentHistory = selectedOrder.paymentHistory.map(p =>
       p.id === editingPaymentId ? { ...editedPaymentData, amount: Number(editedPaymentData.amount) } : p
     );
@@ -195,6 +224,25 @@ export default function Orders() {
   const handleDeletePayment = async (paymentId: string) => {
     if (!selectedOrder) return;
     if (!confirm("Are you sure you want to delete this payment?")) return;
+
+    // Find payment to reverse balance
+    const paymentToDelete = selectedOrder.paymentHistory.find(p => p.id === paymentId);
+    if (paymentToDelete) {
+      let newBank = store.bankBalance;
+      let newCash = store.cashInHand;
+
+      // Reverse payment
+      if (paymentToDelete.mode === 'Cash') {
+        newCash -= Number(paymentToDelete.amount);
+      } else {
+        newBank -= Number(paymentToDelete.amount);
+      }
+
+      await store.updateBalances({
+        bankBalance: newBank.toString(),
+        cashInHand: newCash.toString(),
+      });
+    }
 
     const newPaymentHistory = selectedOrder.paymentHistory.filter(p => p.id !== paymentId);
 
