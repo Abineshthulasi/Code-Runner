@@ -14,6 +14,27 @@ import Expenses from "@/pages/Expenses";
 import Bank from "@/pages/Bank";
 import Reports from "@/pages/Reports";
 import PrintBill from "@/pages/PrintBill";
+import AuthPage from "@/pages/Auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
+
+function ProtectedRoute({ component: Component, ...rest }: any) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Route {...rest} component={AuthPage} />;
+  }
+
+  return <Route {...rest} component={Component} />;
+}
 
 function Router() {
   const loadData = useStore((state) => state.loadData);
@@ -24,13 +45,14 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/orders" component={Orders} />
-      <Route path="/billing" component={Billing} />
-      <Route path="/expenses" component={Expenses} />
-      <Route path="/bank" component={Bank} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/print-bill/:id" component={PrintBill} />
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/orders" component={Orders} />
+      <ProtectedRoute path="/billing" component={Billing} />
+      <ProtectedRoute path="/expenses" component={Expenses} />
+      <ProtectedRoute path="/bank" component={Bank} />
+      <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/print-bill/:id" component={PrintBill} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -41,7 +63,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AuthProvider>
+          <Router />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
