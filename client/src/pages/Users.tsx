@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { User, InsertUser, insertUserSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,7 +31,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Loader2, Trash2, UserPlus, ShieldAlert } from "lucide-react";
+import { Loader2, Trash2, UserPlus, ShieldAlert, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -120,6 +121,14 @@ export default function Users() {
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
+            <div className="flex items-center gap-2 mb-4">
+                <Link href="/">
+                    <Button variant="outline" size="sm" className="gap-2">
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Dashboard
+                    </Button>
+                </Link>
+            </div>
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
                 <Dialog open={open} onOpenChange={setOpen}>
