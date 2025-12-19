@@ -16,6 +16,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUsers(): Promise<User[]>; // Admin only
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
   deleteUser(id: number): Promise<void>;
 
   // Orders
@@ -80,6 +81,17 @@ export class DbStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!user) throw new Error("User not found");
+    return user;
   }
 
   async getOrders(): Promise<Order[]> {
@@ -279,6 +291,14 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     this.users.delete(id);
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
+    const existing = this.users.get(id);
+    if (!existing) throw new Error("User not found");
+    const updated = { ...existing, ...updates };
+    this.users.set(id, updated);
+    return updated;
   }
 
   async getOrders(): Promise<Order[]> {

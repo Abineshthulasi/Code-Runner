@@ -30,8 +30,9 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Loader2, Trash2, UserPlus, ShieldAlert, ArrowLeft } from "lucide-react";
+import { Loader2, Trash2, UserPlus, ShieldAlert, ArrowLeft, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -39,14 +40,19 @@ import { format } from "date-fns";
 export default function Users() {
     const { user: currentUser } = useAuth();
     const { toast } = useToast();
-    const [open, setOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
     const { data: users, isLoading } = useQuery<User[]>({
         queryKey: ["/api/users"],
     });
 
+    // Dynamic schema: Password is optional when editing
+    const schema = editingUser
+        ? insertUserSchema.extend({ password: insertUserSchema.shape.password.optional().or(z.literal('')) })
+        : insertUserSchema;
+
     const form = useForm<InsertUser>({
-        resolver: zodResolver(insertUserSchema),
+        resolver: zodResolver(schema),
         defaultValues: {
             username: "",
             password: "",
@@ -62,6 +68,7 @@ export default function Users() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/users"] });
             setOpen(false);
+            setEditingUser(null);
             form.reset();
             toast({
                 title: "User created",
@@ -71,6 +78,31 @@ export default function Users() {
         onError: (error: Error) => {
             toast({
                 title: "Failed to create user",
+                description: error.message,
+                variant: "destructive",
+            });
+        },
+    });
+
+    const updateUserMutation = useMutation({
+        mutationFn: async (data: InsertUser & { id: number }) => {
+            const { id, ...updates } = data;
+            const res = await apiRequest("PATCH", `/api/users/${id}`, updates);
+            return await res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+            setOpen(false);
+            setEditingUser(null);
+            form.reset();
+            toast({
+                title: "User updated",
+                description: "The user account has been updated.",
+            });
+        },
+        onError: (error: Error) => {
+            toast({
+                title: "Failed to update user",
                 description: error.message,
                 variant: "destructive",
             });
@@ -98,7 +130,31 @@ export default function Users() {
     });
 
     const onSubmit = (data: InsertUser) => {
-        createUserMutation.mutate(data);
+        if (editingUser) {
+            updateUserMutation.mutate({ ...data, id: editingUser.id });
+        } else {
+            createUserMutation.mutate(data);
+        }
+    };
+
+    const handleEdit = (user: User) => {
+        setEditingUser(user);
+        form.reset({
+            username: user.username,
+            password: "", // Always reset password logic field
+            role: user.role as "admin" | "manager" | "staff",
+        });
+        setOpen(true);
+    };
+
+    const handleAdd = () => {
+        setEditingUser(null);
+        form.reset({
+            username: "",
+            password: "",
+            role: "staff",
+        });
+        setOpen(true);
     };
 
     if (isLoading) {
@@ -131,16 +187,19 @@ export default function Users() {
             </div>
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-                <Dialog open={open} onOpenChange={setOpen}>
+                <Dialog open={open} onOpenChange={(val) => {
+                    setOpen(val);
+                    if (!val) setEditingUser(null);
+                }}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={handleAdd}>
                             <UserPlus className="mr-2 h-4 w-4" />
                             Add User
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                            <DialogTitle>Add New User</DialogTitle>
+                            <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -162,7 +221,7 @@ export default function Users() {
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <Label>Password</Label>
+                                            <Label>Password {editingUser && "(Leave blank to keep current)"}</Label>
                                             <FormControl>
                                                 <Input type="password" {...field} />
                                             </FormControl>
@@ -195,9 +254,9 @@ export default function Users() {
                                         </FormItem>
                                     )}
                                 />
-                                <Button2 type="submit" className="w-full" disabled={createUserMutation.isPending}>
-                                    {createUserMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Create Account
+                                <Button2 type="submit" className="w-full" disabled={createUserMutation.isPending || updateUserMutation.isPending}>
+                                    {(createUserMutation.isPending || updateUserMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {editingUser ? "Update User" : "Create Account"}
                                 </Button2>
                             </form>
                         </Form>
@@ -231,20 +290,29 @@ export default function Users() {
                                 </TableCell>
                                 <TableCell>{user.createdAt ? format(new Date(user.createdAt), "MMM d, yyyy") : "-"}</TableCell>
                                 <TableCell className="text-right">
-                                    {user.id !== currentUser?.id && (
+                                    <div className="flex justify-end gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => {
-                                                if (confirm("Are you sure you want to delete this user?")) {
-                                                    deleteUserMutation.mutate(user.id);
-                                                }
-                                            }}
-                                            disabled={deleteUserMutation.isPending}
+                                            onClick={() => handleEdit(user)}
                                         >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                            <Pencil className="h-4 w-4" />
                                         </Button>
-                                    )}
+                                        {user.id !== currentUser?.id && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    if (confirm("Are you sure you want to delete this user?")) {
+                                                        deleteUserMutation.mutate(user.id);
+                                                    }
+                                                }}
+                                                disabled={deleteUserMutation.isPending}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}

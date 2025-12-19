@@ -63,6 +63,33 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updates = { ...req.body };
+
+      // Check if username is being updated and is unique
+      if (updates.username) {
+        const existing = await storage.getUserByUsername(updates.username);
+        if (existing && existing.id !== userId) {
+          return res.status(400).send("Username already exists");
+        }
+      }
+
+      // Hash password if provided
+      if (updates.password) {
+        updates.password = await hashPassword(updates.password);
+      } else {
+        delete updates.password; // Don't update if empty
+      }
+
+      const user = await storage.updateUser(userId, updates);
+      res.json(user);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to update user" });
+    }
+  });
+
   // ===== ORDERS =====
   app.get("/api/orders", async (_req, res) => {
     try {
