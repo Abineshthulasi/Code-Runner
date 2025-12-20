@@ -38,7 +38,7 @@ const orderSchema = z.object({
   clientName: z.string().min(2, "Name required"),
   phone: z.string().optional(),
   orderDate: z.string().min(1, "Order date required"),
-  dueDate: z.string().min(1, "Date required"),
+  dueDate: z.string().optional(),
   items: z.array(z.object({
     description: z.string().min(1, "Item description required"),
     quantity: z.coerce.number().min(1),
@@ -91,7 +91,7 @@ export default function Billing() {
       initialPayment: data.advanceAmount,
       initialPaymentMode: data.advanceMode,
       orderDate: data.orderDate,
-      dueDate: data.dueDate,
+      dueDate: data.dueDate || "",
       notes: data.notes
     });
 

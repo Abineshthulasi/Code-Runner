@@ -28,7 +28,7 @@ export const orders = pgTable("orders", {
     note?: string;
   }>>().default(sql`'[]'::jsonb`),
   orderDate: varchar("order_date", { length: 20 }).notNull(),
-  dueDate: varchar("due_date", { length: 20 }).notNull(),
+  dueDate: varchar("due_date", { length: 20 }),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
