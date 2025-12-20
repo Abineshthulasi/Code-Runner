@@ -96,6 +96,14 @@ export default function Reports() {
     const selectedYearInt = parseInt(selectedYear);
     const startOfSelectedYear = new Date(selectedYearInt, 0, 1);
     const firstTxDate = allTransactions.length > 0 ? new Date(allTransactions[0].date) : new Date();
+
+    // Also check first order date, as there might be unpaid orders before any payment
+    const sortedOrders = [...store.orders].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const firstOrderDate = sortedOrders.length > 0 ? new Date(sortedOrders[0].createdAt) : new Date();
+
+    // Earliest activity is min(firstTx, firstOrder)
+    const firstActivityDate = firstTxDate < firstOrderDate ? firstTxDate : firstOrderDate;
+
     const currentDate = new Date();
 
     let yearOpeningBank = 0;
@@ -122,10 +130,6 @@ export default function Reports() {
     // Iterate through each month of the selected year
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
       const thisMonthDate = new Date(selectedYearInt, monthIndex, 1);
-
-      // Visibility Check
-      const isFuture = thisMonthDate > currentDate;
-      const isBeforeStart = thisMonthDate < new Date(firstTxDate.getFullYear(), firstTxDate.getMonth(), 1);
 
       // We calculate balances even if hidden (to keep running totals correct)
       // But we only push to report if visible (or if we want to show empty months)
@@ -192,7 +196,13 @@ export default function Reports() {
       });
 
 
-      if (!isFuture && !isBeforeStart) {
+      // Visibility Check
+      const isFuture = thisMonthDate > currentDate;
+      const isBeforeStart = thisMonthDate < new Date(firstActivityDate.getFullYear(), firstActivityDate.getMonth(), 1);
+
+      const hasActivity = monthlySales > 0 || monthlyExpenses > 0 || monthlyDeposits > 0 || monthlyWithdrawals > 0 || monthlyPending > 0 || monthlyPrevMonthRecovery > 0;
+
+      if (!isFuture && (!isBeforeStart || hasActivity)) {
         report.push({
           month: MONTHS[monthIndex],
           monthIndex,
