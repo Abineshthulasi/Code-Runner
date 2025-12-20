@@ -28,6 +28,7 @@ import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2 } from "lucide-react
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { format, parseISO } from "date-fns";
 
 export default function Orders() {
   const store = useStore();
@@ -63,6 +64,15 @@ export default function Orders() {
     const dateB = new Date(b.orderDate).getTime();
     return dateB - dateA; // Descending
   });
+
+  const formatDisplayDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "";
+    try {
+      return format(parseISO(dateStr), 'dd-MM-yyyy');
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
 
   const handleUpdateWorkStatus = (status: string) => {
@@ -367,7 +377,7 @@ export default function Orders() {
                       <div className="font-medium">{order.clientName}</div>
                       <div className="text-xs text-muted-foreground">{order.phone}</div>
                     </TableCell>
-                    <TableCell className="text-xs">{order.orderDate}</TableCell>
+                    <TableCell className="text-xs">{formatDisplayDate(order.orderDate)}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
                         order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
@@ -442,7 +452,7 @@ export default function Orders() {
                   ) : (
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingOrderDate(true)}>
                       <span className="text-sm font-normal text-muted-foreground group-hover:text-primary transition-colors">
-                        {selectedOrder?.orderDate}
+                        {formatDisplayDate(selectedOrder?.orderDate)}
                       </span>
                       <Edit2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
