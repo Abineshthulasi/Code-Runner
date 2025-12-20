@@ -338,6 +338,7 @@ export default function Reports() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Month</TableHead>
                     <TableHead className="text-right">Sales</TableHead>
                     <TableHead className="text-right">Recv. (Prev Month)</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
