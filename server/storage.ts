@@ -95,7 +95,7 @@ export class DbStorage implements IStorage {
   }
 
   async getOrders(): Promise<Order[]> {
-    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+    return await db.select().from(orders).orderBy(desc(orders.orderDate));
   }
 
   async getOrderById(id: string): Promise<Order | undefined> {
@@ -303,7 +303,7 @@ export class MemStorage implements IStorage {
 
   async getOrders(): Promise<Order[]> {
     return Array.from(this.orders.values()).sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
     );
   }
 
