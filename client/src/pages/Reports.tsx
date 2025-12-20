@@ -169,11 +169,28 @@ export default function Reports() {
       let monthlyPrevMonthRecovery = 0;
 
       // 1. Pending Amount: Orders created in this month
+      // Logic: Total Value of Orders Created in Month - Payments Received *in this month* for those orders
+      // This gives the "Closing Pending Balance" for the month.
       const monthlyOrders = store.orders.filter(o => {
         const d = new Date(o.createdAt);
         return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex;
       });
-      monthlyPending = monthlyOrders.reduce((sum, o) => sum + Number(o.balanceAmount), 0);
+
+      const totalOrderValue = monthlyOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+      let collectedForThisMonthOrdersInThisMonth = 0;
+
+      monthlyOrders.forEach(order => {
+        order.paymentHistory.forEach(payment => {
+          const pDate = new Date(payment.date);
+          if (pDate.getFullYear() === selectedYearInt && pDate.getMonth() === monthIndex) {
+            collectedForThisMonthOrdersInThisMonth += Number(payment.amount);
+          }
+        });
+      });
+
+      monthlyPending = totalOrderValue - collectedForThisMonthOrdersInThisMonth;
+      // Ensure strictly non-negative (though logic should guarantee it unless data is weird)
+      monthlyPending = Math.max(0, monthlyPending);
 
       // 2. Prev Month Recovery: Payments received in this month for orders from prev month
       // We can't use 'monthlySales' from allTransactions easily because it lost order context.
