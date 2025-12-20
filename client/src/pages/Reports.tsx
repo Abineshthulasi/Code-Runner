@@ -98,8 +98,8 @@ export default function Reports() {
     const firstTxDate = allTransactions.length > 0 ? new Date(allTransactions[0].date) : new Date();
 
     // Also check first order date, as there might be unpaid orders before any payment
-    const sortedOrders = [...store.orders].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    const firstOrderDate = sortedOrders.length > 0 ? new Date(sortedOrders[0].createdAt) : new Date();
+    const sortedOrders = [...store.orders].sort((a, b) => new Date(a.orderDate || a.createdAt).getTime() - new Date(b.orderDate || b.createdAt).getTime());
+    const firstOrderDate = sortedOrders.length > 0 ? new Date(sortedOrders[0].orderDate || sortedOrders[0].createdAt) : new Date();
 
     // Earliest activity is min(firstTx, firstOrder)
     const firstActivityDate = firstTxDate < firstOrderDate ? firstTxDate : firstOrderDate;
@@ -172,7 +172,7 @@ export default function Reports() {
       // Logic: Total Value of Orders Created in Month - Payments Received *in this month* for those orders
       // This gives the "Closing Pending Balance" for the month.
       const monthlyOrders = store.orders.filter(o => {
-        const d = new Date(o.createdAt);
+        const d = new Date(o.orderDate || o.createdAt);
         return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex;
       });
 
