@@ -7,7 +7,7 @@ export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderNumber: varchar("order_number", { length: 50 }).notNull().unique(),
   clientName: text("client_name").notNull(),
-  phone: varchar("phone", { length: 20 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
   items: jsonb("items").notNull().$type<Array<{
     id: string;
     description: string;

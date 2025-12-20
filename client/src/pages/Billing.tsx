@@ -36,7 +36,7 @@ import {
 
 const orderSchema = z.object({
   clientName: z.string().min(2, "Name required"),
-  phone: z.string().min(10, "Phone required"),
+  phone: z.string().optional(),
   orderDate: z.string().min(1, "Order date required"),
   dueDate: z.string().min(1, "Date required"),
   items: z.array(z.object({
@@ -85,7 +85,7 @@ export default function Billing() {
     const newOrder = await store.addOrder({
       orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       clientName: data.clientName,
-      phone: data.phone,
+      phone: data.phone || null,
       items: data.items.map(i => ({ ...i, id: Math.random().toString() })),
       totalAmount,
       initialPayment: data.advanceAmount,
