@@ -134,6 +134,18 @@ export function ManagerDashboard({ disableLayout = false, hideToggle = false }: 
                         </CardContent>
                     </Card>
 
+                    {/* Total Received Amount (Bank + Cash) */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Received (Month)</CardTitle>
+                            <Banknote className="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-primary">₹{(receivedBank + receivedCash).toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Total collected payment</p>
+                        </CardContent>
+                    </Card>
+
                     {/* Received in Bank */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
