@@ -38,6 +38,8 @@ interface MonthlyData {
   closingBank: number;
   openingCash: number;
   closingCash: number;
+  pending: number; // New: Pending amount for orders of this month
+  prevMonthRecovery: number; // New: Amount collected this month for prev month orders
 }
 
 export default function Reports() {
@@ -87,121 +89,57 @@ export default function Reports() {
       });
     });
 
-    // Sort by date
+    // Sort by date sort is vital for running balance
     allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Calculate opening balances for the selected year (global history)
-    let runningBank = 0;
-    let runningCash = 0;
-
-    // First, process all transactions PRIOR to the selected year to get the accurate opening balance
     const selectedYearInt = parseInt(selectedYear);
     const startOfSelectedYear = new Date(selectedYearInt, 0, 1);
-
-    // Also determine the date of the very first transaction to know when to start showing data
     const firstTxDate = allTransactions.length > 0 ? new Date(allTransactions[0].date) : new Date();
     const currentDate = new Date();
 
-    // Iterate through all transactions
-    // 1. If tx is before selected year -> just update running balances
-    // 2. If tx is within selected year -> update balances AND track monthly totals
-
-    // Initialize monthly aggregators
-    const monthlyData = new Array(12).fill(0).map(() => ({
-      sales: 0,
-      expenses: 0,
-      deposits: 0,
-      withdrawals: 0
-    }));
-
-    allTransactions.forEach(tx => {
-      const txDate = new Date(tx.date);
-
-      // Update running balances regardless of date
-      const amount = tx.amount;
-      if (tx.type === 'sale') {
-        if (tx.mode === 'Cash') runningCash += amount;
-        else runningBank += amount;
-      } else if (tx.type === 'expense') {
-        if (tx.mode === 'Cash') runningCash -= amount;
-        else runningBank -= amount;
-      } else if (tx.type === 'deposit') {
-        if (tx.mode === 'Cash') runningCash += amount;
-        else runningBank += amount;
-      } else if (tx.type === 'withdraw') {
-        if (tx.mode === 'Cash') runningCash -= amount;
-        else runningBank -= amount;
-      }
-
-      // If this transaction is in the selected year, add to monthly totals
-      if (txDate.getFullYear() === selectedYearInt) {
-        const monthIdx = txDate.getMonth();
-        const mData = monthlyData[monthIdx];
-
-        if (tx.type === 'sale') mData.sales += amount;
-        else if (tx.type === 'expense') mData.expenses += amount;
-        else if (tx.type === 'deposit') mData.deposits += amount;
-        else if (tx.type === 'withdraw') mData.withdrawals += amount;
-      }
-    });
-
-    // Now build the report array based on the final monthly data
-    // But we need to reconstruct the "running" state month by month for the selected year
-
-    // Reset running balances to what they were at START of selected year
-    // We do this by re-calculating from 0 but stopping at Jan 1st
     let yearOpeningBank = 0;
     let yearOpeningCash = 0;
 
+    // Calculate opening balance at start of year
     allTransactions.forEach(tx => {
       const txDate = new Date(tx.date);
       if (txDate < startOfSelectedYear) {
         const amount = tx.amount;
-        if (tx.type === 'sale') {
+        if (tx.type === 'sale' || tx.type === 'deposit') {
           if (tx.mode === 'Cash') yearOpeningCash += amount;
           else yearOpeningBank += amount;
-        } else if (tx.type === 'expense') {
-          if (tx.mode === 'Cash') yearOpeningCash -= amount;
-          else yearOpeningBank -= amount;
-        } else if (tx.type === 'deposit') {
-          if (tx.mode === 'Cash') yearOpeningCash += amount;
-          else yearOpeningBank += amount;
-        } else if (tx.type === 'withdraw') {
+        } else if (tx.type === 'expense' || tx.type === 'withdraw') {
           if (tx.mode === 'Cash') yearOpeningCash -= amount;
           else yearOpeningBank -= amount;
         }
       }
     });
 
-    // Now proceed month by month in the selected year
     let currentBank = yearOpeningBank;
     let currentCash = yearOpeningCash;
 
+    // Iterate through each month of the selected year
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-      // Determine if we should show this month
-      // Show if: 
-      // 1. It's not in the future relative to today AND
-      // 2. It's not before the first transaction EVER (unless it's the same year and we want to show empty start? User said "starts from when amount deposite")
-
       const thisMonthDate = new Date(selectedYearInt, monthIndex, 1);
-      const nextMonthDate = new Date(selectedYearInt, monthIndex + 1, 1); // For comparison
 
-      // Calculate closing balances for this month
-      // We can use the pre-calculated monthlyData
-      // But we need to account for the specific mode splits which monthlyData aggregated loosely?
-      // Actually monthlyData didn't track mode splits, so we need to iterate again or better yet, refine the loop structure.
+      // Visibility Check
+      const isFuture = thisMonthDate > currentDate;
+      const isBeforeStart = thisMonthDate < new Date(firstTxDate.getFullYear(), firstTxDate.getMonth(), 1);
 
-      // Optimised approach:
-      // Loop 12 months. Inside, find transactions for that month.
+      // We calculate balances even if hidden (to keep running totals correct)
+      // But we only push to report if visible (or if we want to show empty months)
+      // Actually, we must process transactions to update currentBank/currentCash regardless.
 
       let monthlySales = 0;
       let monthlyExpenses = 0;
       let monthlyDeposits = 0;
       let monthlyWithdrawals = 0;
 
-      let monthOpeningBank = currentBank;
-      let monthOpeningCash = currentCash;
+      const monthOpeningBank = currentBank;
+      const monthOpeningCash = currentCash;
 
+      // Process transactions for this month
       allTransactions.forEach(tx => {
         const txDate = new Date(tx.date);
         if (txDate.getFullYear() === selectedYearInt && txDate.getMonth() === monthIndex) {
@@ -222,11 +160,37 @@ export default function Reports() {
         }
       });
 
-      // Visibility Check
-      // Don't show future months
-      // Don't show months before the very first transaction starts (if year is same)
-      const isFuture = thisMonthDate > currentDate;
-      const isBeforeStart = thisMonthDate < new Date(firstTxDate.getFullYear(), firstTxDate.getMonth(), 1);
+      // Calculate Special Metrics (Pending & Recovery)
+      let monthlyPending = 0;
+      let monthlyPrevMonthRecovery = 0;
+
+      // 1. Pending Amount: Orders created in this month
+      const monthlyOrders = store.orders.filter(o => {
+        const d = new Date(o.createdAt);
+        return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex;
+      });
+      monthlyPending = monthlyOrders.reduce((sum, o) => sum + Number(o.balanceAmount), 0);
+
+      // 2. Prev Month Recovery: Payments received in this month for orders from prev month
+      // We can't use 'monthlySales' from allTransactions easily because it lost order context.
+      // So we iterate store.orders again.
+      store.orders.forEach(order => {
+        const oDate = new Date(order.orderDate || order.createdAt);
+
+        // Check if payment is in this month
+        order.paymentHistory.forEach(payment => {
+          const pDate = new Date(payment.date);
+          if (pDate.getFullYear() === selectedYearInt && pDate.getMonth() === monthIndex) {
+            // Payment matches this month. Check if order is from previous month.
+            const prevMonthDate = new Date(selectedYearInt, monthIndex - 1, 1);
+            // Check strictly if order is in the previous month (Year/Month matching)
+            if (oDate.getFullYear() === prevMonthDate.getFullYear() && oDate.getMonth() === prevMonthDate.getMonth()) {
+              monthlyPrevMonthRecovery += Number(payment.amount);
+            }
+          }
+        });
+      });
+
 
       if (!isFuture && !isBeforeStart) {
         report.push({
@@ -241,6 +205,8 @@ export default function Reports() {
           closingBank: currentBank,
           openingCash: monthOpeningCash,
           closingCash: currentCash,
+          pending: monthlyPending,
+          prevMonthRecovery: monthlyPrevMonthRecovery
         });
       }
     }
@@ -255,7 +221,9 @@ export default function Reports() {
       expenses: acc.expenses + month.expenses,
       deposits: acc.deposits + month.deposits,
       withdrawals: acc.withdrawals + month.withdrawals,
-    }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0 });
+      pending: acc.pending + month.pending,
+      prevMonthRecovery: acc.prevMonthRecovery + month.prevMonthRecovery
+    }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0, pending: 0, prevMonthRecovery: 0 });
   }, [monthlyReport]);
 
   // Balance Adjustment Logic
@@ -370,9 +338,10 @@ export default function Reports() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Month</TableHead>
                     <TableHead className="text-right">Sales</TableHead>
+                    <TableHead className="text-right">Recv. (Prev Month)</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
+                    <TableHead className="text-right">Pending (Orders)</TableHead>
                     <TableHead className="text-right">Net Profit/Loss</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -387,8 +356,14 @@ export default function Reports() {
                         <TableCell className="text-right text-green-600">
                           ₹{data.sales.toLocaleString()}
                         </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          ₹{data.prevMonthRecovery.toLocaleString()}
+                        </TableCell>
                         <TableCell className="text-right text-red-600">
                           ₹{data.expenses.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right text-amber-600">
+                          ₹{data.pending.toLocaleString()}
                         </TableCell>
                         <TableCell className={`text-right font-semibold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {netProfit >= 0 ? '+' : ''}₹{netProfit.toLocaleString()}
@@ -399,7 +374,9 @@ export default function Reports() {
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell>Total ({selectedYear})</TableCell>
                     <TableCell className="text-right text-green-600">₹{yearTotals.sales.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-blue-600">₹{yearTotals.prevMonthRecovery.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-red-600">₹{yearTotals.expenses.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-amber-600">₹{yearTotals.pending.toLocaleString()}</TableCell>
                     <TableCell className={`text-right ${yearTotals.sales - yearTotals.expenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {yearTotals.sales - yearTotals.expenses >= 0 ? '+' : ''}₹{(yearTotals.sales - yearTotals.expenses).toLocaleString()}
                     </TableCell>
