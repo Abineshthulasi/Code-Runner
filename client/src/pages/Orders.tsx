@@ -58,7 +58,11 @@ export default function Orders() {
     order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.phone.includes(searchTerm)
-  );
+  ).sort((a, b) => {
+    const dateA = new Date(a.orderDate).getTime();
+    const dateB = new Date(b.orderDate).getTime();
+    return dateB - dateA; // Descending
+  });
 
 
   const handleUpdateWorkStatus = (status: string) => {
