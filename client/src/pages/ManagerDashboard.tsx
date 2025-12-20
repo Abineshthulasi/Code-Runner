@@ -9,7 +9,7 @@ import {
     Building2,
     Banknote
 } from "lucide-react";
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths } from "date-fns";
 
 import { StaffDashboard } from "./StaffDashboard";
 import { useState } from "react";
@@ -65,6 +65,32 @@ export function ManagerDashboard({ disableLayout = false, hideToggle = false }: 
                 }
             }
         });
+    });
+
+    // 7. Previous Month Sales Amount Received in Current Month
+    // Logic: Order created in Last Month AND Payment received in Current Month
+    const lastMonth = subMonths(now, 1);
+    const lastMonthStart = startOfMonth(lastMonth);
+    const lastMonthEnd = endOfMonth(lastMonth);
+
+    const isLastMonthOrder = (dateStr: string) => {
+        try {
+            const date = parseISO(dateStr);
+            return isWithinInterval(date, { start: lastMonthStart, end: lastMonthEnd });
+        } catch (e) {
+            return false;
+        }
+    };
+
+    let collectedFromLastMonth = 0;
+    store.orders.forEach(order => {
+        if (isLastMonthOrder(order.orderDate || order.createdAt)) {
+            order.paymentHistory.forEach(payment => {
+                if (isCurrentMonth(payment.date)) {
+                    collectedFromLastMonth += Number(payment.amount);
+                }
+            });
+        }
     });
 
     const content = (
@@ -143,6 +169,18 @@ export function ManagerDashboard({ disableLayout = false, hideToggle = false }: 
                         <CardContent>
                             <div className="text-2xl font-bold text-primary">₹{(receivedBank + receivedCash).toLocaleString()}</div>
                             <p className="text-xs text-muted-foreground mt-1">Total collected payment</p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Previous Month Collections */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Prev. Month Sales Received</CardTitle>
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-blue-600">₹{collectedFromLastMonth.toLocaleString()}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Collected this month for last month's orders</p>
                         </CardContent>
                     </Card>
 
