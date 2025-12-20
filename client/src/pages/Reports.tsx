@@ -200,7 +200,7 @@ export default function Reports() {
       const isFuture = thisMonthDate > currentDate;
       const isBeforeStart = thisMonthDate < new Date(firstActivityDate.getFullYear(), firstActivityDate.getMonth(), 1);
 
-      const hasActivity = monthlySales > 0 || monthlyExpenses > 0 || monthlyDeposits > 0 || monthlyWithdrawals > 0 || monthlyPending > 0 || monthlyPrevMonthRecovery > 0;
+      const hasActivity = monthlySales > 0 || monthlyExpenses > 0 || monthlyDeposits > 0 || monthlyWithdrawals > 0 || monthlyPending > 0 || monthlyPrevMonthRecovery > 0 || monthlyOrders.length > 0;
 
       if (!isFuture && (!isBeforeStart || hasActivity)) {
         report.push({
