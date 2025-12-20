@@ -26,7 +26,7 @@ export interface Order {
   id: string;
   orderNumber: string;
   clientName: string;
-  phone: string | null;
+  phone: string;
   items: OrderItem[];
   totalAmount: number;
   advanceAmount: number;

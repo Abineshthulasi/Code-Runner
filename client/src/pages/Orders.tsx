@@ -55,7 +55,7 @@ export default function Orders() {
   const filteredOrders = store.orders.filter(order =>
     order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (order.phone || "").includes(searchTerm)
+    order.phone.includes(searchTerm)
   );
 
 

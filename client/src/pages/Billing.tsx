@@ -85,7 +85,7 @@ export default function Billing() {
     const newOrder = await store.addOrder({
       orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       clientName: data.clientName,
-      phone: data.phone || null,
+      phone: data.phone || "",
       items: data.items.map(i => ({ ...i, id: Math.random().toString() })),
       totalAmount,
       initialPayment: data.advanceAmount,
