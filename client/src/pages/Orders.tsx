@@ -46,6 +46,7 @@ export default function Orders() {
   // Item Editing State
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [editedItems, setEditedItems] = useState<{ id: string; description: string; quantity: number; price: number }[]>([]);
+  const [isEditingOrderDate, setIsEditingOrderDate] = useState(false);
 
   // Payment Editing State
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
@@ -69,13 +70,21 @@ export default function Orders() {
       setSelectedOrder({ ...selectedOrder, ...pendingUpdates, workStatus: status as any });
     }
   };
-
   const handleUpdateDeliveryStatus = (status: string) => {
     if (selectedOrder) {
       setPendingUpdates((prev: any) => ({ ...prev, deliveryStatus: status }));
       setSelectedOrder({ ...selectedOrder, ...pendingUpdates, deliveryStatus: status as any });
     }
   };
+
+  const handleUpdateOrderDate = (date: string) => {
+    if (selectedOrder) {
+      setPendingUpdates((prev: any) => ({ ...prev, orderDate: date }));
+      // Update local state immediately for visual feedback
+      setSelectedOrder({ ...selectedOrder, ...pendingUpdates, orderDate: date });
+    }
+  };
+
 
   const handleSaveChanges = async () => {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
@@ -413,9 +422,28 @@ export default function Orders() {
             <DialogHeader>
               <DialogTitle className="flex justify-between items-center">
                 <span>Order: {selectedOrder?.orderNumber}</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  {selectedOrder?.orderDate}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isEditingOrderDate ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="date"
+                        value={selectedOrder?.orderDate}
+                        onChange={(e) => handleUpdateOrderDate(e.target.value)}
+                        className="h-8 w-36"
+                      />
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setIsEditingOrderDate(false)}>
+                        <Save className="w-3 h-3 text-green-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingOrderDate(true)}>
+                      <span className="text-sm font-normal text-muted-foreground group-hover:text-primary transition-colors">
+                        {selectedOrder?.orderDate}
+                      </span>
+                      <Edit2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  )}
+                </div>
               </DialogTitle>
             </DialogHeader>
 
