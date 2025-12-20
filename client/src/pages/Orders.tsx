@@ -40,6 +40,7 @@ export default function Orders() {
   // Payment Dialog State
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState<"Cash" | "UPI" | "Bank">("Cash");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentNote, setPaymentNote] = useState("");
 
   // Item Editing State
@@ -93,10 +94,11 @@ export default function Orders() {
         selectedOrder.id,
         Number(paymentAmount),
         paymentMode,
-        new Date().toISOString().split('T')[0],
+        paymentDate,
         paymentNote
       );
       setPaymentAmount("");
+      setPaymentDate(new Date().toISOString().split('T')[0]);
       setPaymentNote("");
       toast({ title: "Payment Recorded" });
       // Close dialog or update local selectedOrder to reflect changes?
@@ -689,12 +691,20 @@ export default function Orders() {
                         </Select>
                         <Button onClick={handleAddPayment} size="sm">Record</Button>
                       </div>
-                      <Input
-                        placeholder="Note (Optional)"
-                        value={paymentNote}
-                        onChange={(e) => setPaymentNote(e.target.value)}
-                        className="h-8 text-xs"
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          value={paymentDate}
+                          onChange={(e) => setPaymentDate(e.target.value)}
+                          className="h-8"
+                        />
+                        <Input
+                          placeholder="Note (Optional)"
+                          value={paymentNote}
+                          onChange={(e) => setPaymentNote(e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
