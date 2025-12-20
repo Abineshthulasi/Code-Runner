@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: code-runner
+    name: bobiz-boutique-management
     env: node
     plan: free
     buildCommand: npm install --production=false && npm run build
