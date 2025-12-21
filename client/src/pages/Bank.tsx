@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Minus, Building2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Bank() {
   const store = useStore();
@@ -200,7 +201,7 @@ export default function Bank() {
             <CardTitle>Transaction History</CardTitle>
           </CardHeader>
           <CardContent>
-            <TransactionTable transactions={store.transactions} onDelete={(id, type, amount, mode) => store.deleteTransaction(id, type, amount, mode)} onEdit={(id, desc) => store.updateTransaction(id, { description: desc })} />
+            <TransactionTable transactions={store.transactions} onDelete={(id, type, amount, mode) => store.deleteTransaction(id, type, amount, mode)} onEdit={(id, updates) => store.updateTransaction(id, updates)} />
           </CardContent>
         </Card>
       </div>
@@ -218,22 +219,35 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
+
+
 function TransactionTable({ transactions, onDelete, onEdit }: {
   transactions: any[],
   onDelete: (id: string, type: string, amount: number, mode: string) => void,
-  onEdit: (id: string, desc: string) => void
+  onEdit: (id: string, updates: any) => void
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editMode, setEditMode] = useState<"Cash" | "Bank">("Cash");
 
   const startEdit = (tx: any) => {
     setEditingId(tx.id);
     setEditDesc(tx.description);
+    setEditDate(tx.date);
+    setEditAmount(String(tx.amount));
+    setEditMode(tx.mode);
   };
 
   const saveEdit = () => {
     if (editingId) {
-      onEdit(editingId, editDesc);
+      onEdit(editingId, {
+        description: editDesc,
+        date: editDate,
+        amount: Number(editAmount),
+        mode: editMode
+      });
       setEditingId(null);
     }
   };
@@ -300,12 +314,49 @@ function TransactionTable({ transactions, onDelete, onEdit }: {
             <DialogTitle>Edit Transaction</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Description</Label>
               <Input
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Mode</Label>
+              <RadioGroup
+                value={editMode}
+                onValueChange={(val: "Cash" | "Bank") => setEditMode(val)}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Bank" id="edit-tx-bank" />
+                  <Label htmlFor="edit-tx-bank">Bank Account</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Cash" id="edit-tx-cash" />
+                  <Label htmlFor="edit-tx-cash">Cash in Hand</Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
           <DialogFooter>

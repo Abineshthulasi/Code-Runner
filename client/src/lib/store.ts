@@ -388,7 +388,40 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateTransaction: async (id, updates) => {
-    // Only simple updates supported that don't change balance logic complexity for now
+    const state = get();
+    const oldTx = state.transactions.find(t => t.id === id);
+    if (!oldTx) return;
+
+    // 1. Revert old transaction
+    let newBank = state.bankBalance;
+    let newCash = state.cashInHand;
+    const oldAmount = Number(oldTx.amount);
+
+    if (oldTx.type === 'Deposit') {
+      if (oldTx.mode === 'Cash') newCash -= oldAmount;
+      else newBank -= oldAmount;
+    } else { // Withdraw
+      if (oldTx.mode === 'Cash') newCash += oldAmount;
+      else newBank += oldAmount;
+    }
+
+    // 2. Apply new transaction
+    const newTx = { ...oldTx, ...updates };
+    const newAmount = Number(newTx.amount);
+
+    if (newTx.type === 'Deposit') {
+      if (newTx.mode === 'Cash') newCash += newAmount;
+      else newBank += newAmount;
+    } else { // Withdraw
+      if (newTx.mode === 'Cash') newCash -= newAmount;
+      else newBank -= newAmount;
+    }
+
+    await api.updateBalances({
+      bankBalance: newBank.toString(),
+      cashInHand: newCash.toString(),
+    });
+
     await api.updateTransaction(id, updates);
     await get().loadData();
   },
