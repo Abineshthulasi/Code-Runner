@@ -43,8 +43,13 @@ interface MonthlyData {
   totalSales: number; // New: Total worth of orders created in this month
   salesCash: number;
   salesBank: number;
+
   expensesCash: number;
   expensesBank: number;
+  depositsCash: number;
+  depositsBank: number;
+  withdrawalsCash: number;
+  withdrawalsBank: number;
 }
 
 // Helper for consistent local date parsing (YYYY-MM-DD -> Local Midnight)
@@ -158,6 +163,10 @@ export default function Reports() {
       let monthlySalesBank = 0;
       let monthlyExpensesCash = 0;
       let monthlyExpensesBank = 0;
+      let monthlyDepositsCash = 0;
+      let monthlyDepositsBank = 0;
+      let monthlyWithdrawalsCash = 0;
+      let monthlyWithdrawalsBank = 0;
 
       const monthOpeningBank = currentBank;
       const monthOpeningCash = currentCash;
@@ -189,12 +198,22 @@ export default function Reports() {
             }
           } else if (tx.type === 'deposit') {
             monthlyDeposits += amount;
-            if (isCash) currentCash += amount;
-            else currentBank += amount;
+            if (isCash) {
+              currentCash += amount;
+              monthlyDepositsCash += amount;
+            } else {
+              currentBank += amount;
+              monthlyDepositsBank += amount;
+            }
           } else if (tx.type === 'withdraw') {
             monthlyWithdrawals += amount;
-            if (isCash) currentCash -= amount;
-            else currentBank -= amount;
+            if (isCash) {
+              currentCash -= amount;
+              monthlyWithdrawalsCash += amount;
+            } else {
+              currentBank -= amount;
+              monthlyWithdrawalsBank += amount;
+            }
           }
         }
       });
@@ -267,7 +286,11 @@ export default function Reports() {
           salesCash: monthlySalesCash,
           salesBank: monthlySalesBank,
           expensesCash: monthlyExpensesCash,
-          expensesBank: monthlyExpensesBank
+          expensesBank: monthlyExpensesBank,
+          depositsCash: monthlyDepositsCash,
+          depositsBank: monthlyDepositsBank,
+          withdrawalsCash: monthlyWithdrawalsCash,
+          withdrawalsBank: monthlyWithdrawalsBank
         });
       }
     }
@@ -487,26 +510,34 @@ export default function Reports() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Month</TableHead>
-                    <TableHead className="text-right">Opening Bank</TableHead>
-                    <TableHead className="text-right">Recv. (Bank)</TableHead>
-                    <TableHead className="text-right">Exp. (Bank)</TableHead>
-                    <TableHead className="text-right">Closing Bank</TableHead>
-                    <TableHead className="text-right">Opening Cash</TableHead>
-                    <TableHead className="text-right">Recv. (Cash)</TableHead>
-                    <TableHead className="text-right">Exp. (Cash)</TableHead>
-                    <TableHead className="text-right">Closing Cash</TableHead>
-                    <TableHead className="text-right">Deposits</TableHead>
-                    <TableHead className="text-right">Withdrawals</TableHead>
+                    <TableHead className="text-right border-l">Open (Bank)</TableHead>
+                    <TableHead className="text-right text-green-600">Sales</TableHead>
+                    <TableHead className="text-right text-green-600">Add Fund</TableHead>
+                    <TableHead className="text-right text-red-600">Exp.</TableHead>
+                    <TableHead className="text-right text-red-600">Withd.</TableHead>
+                    <TableHead className="text-right font-bold bg-slate-50 border-r">Close (Bank)</TableHead>
+
+                    <TableHead className="text-right">Open (Cash)</TableHead>
+                    <TableHead className="text-right text-green-600">Sales</TableHead>
+                    <TableHead className="text-right text-green-600">Add Fund</TableHead>
+                    <TableHead className="text-right text-red-600">Exp.</TableHead>
+                    <TableHead className="text-right text-red-600">Withd.</TableHead>
+                    <TableHead className="text-right font-bold bg-slate-50">Close (Cash)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {monthlyReport.map((data) => (
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
-                      <TableCell className="text-right">₹{data.openingBank.toLocaleString()}</TableCell>
+                      <TableCell className="font-medium border-b">{data.month}</TableCell>
+
+                      {/* Bank Section */}
+                      <TableCell className="text-right border-l">₹{data.openingBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-green-600">+₹{data.salesBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.depositsBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-red-600">-₹{data.expensesBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold">
+                      <TableCell className="text-right text-red-600">-₹{data.withdrawalsBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-bold bg-slate-50 border-r">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingBank.toLocaleString()}
                           <Button
@@ -527,10 +558,13 @@ export default function Reports() {
                           </Button>
                         </div>
                       </TableCell>
+                      {/* Cash Section */}
                       <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-green-600">+₹{data.salesCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.depositsCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-red-600">-₹{data.expensesCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-semibold">
+                      <TableCell className="text-right text-red-600">-₹{data.withdrawalsCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-bold bg-slate-50">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingCash.toLocaleString()}
                           <Button
@@ -550,12 +584,6 @@ export default function Reports() {
                             <Pencil className="h-3 w-3" />
                           </Button>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {data.deposits > 0 ? `+₹${data.deposits.toLocaleString()}` : '-'}
-                      </TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {data.withdrawals > 0 ? `-₹${data.withdrawals.toLocaleString()}` : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
