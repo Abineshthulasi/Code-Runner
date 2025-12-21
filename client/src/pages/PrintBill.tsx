@@ -73,23 +73,23 @@ export default function PrintBill() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b-2 border-black">
-                                <th className="py-3 font-bold text-sm uppercase">Item Description</th>
-                                <th className="py-3 text-right font-bold text-sm uppercase w-24">Qty</th>
-                                <th className="py-3 text-right font-bold text-sm uppercase w-32">Rate</th>
-                                <th className="py-3 text-right font-bold text-sm uppercase w-24">Discount</th>
-                                <th className="py-3 text-right font-bold text-sm uppercase w-32">Amount</th>
+                                <th className="py-3 px-2 font-bold text-sm uppercase text-left">Item Description</th>
+                                <th className="py-3 px-2 text-center font-bold text-sm uppercase w-16">Qty</th>
+                                <th className="py-3 px-2 text-right font-bold text-sm uppercase w-28">Rate</th>
+                                <th className="py-3 px-2 text-right font-bold text-sm uppercase w-28">Discount</th>
+                                <th className="py-3 px-2 text-right font-bold text-sm uppercase w-32">Amount</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {order.items.map((item, i) => (
                                 <tr key={i}>
-                                    <td className="py-4">{item.description}</td>
-                                    <td className="py-4 text-right">{item.quantity}</td>
-                                    <td className="py-4 text-right">₹{item.price.toLocaleString()}</td>
-                                    <td className="py-4 text-right text-red-600">
+                                    <td className="py-4 px-2 text-left">{item.description}</td>
+                                    <td className="py-4 px-2 text-center">{item.quantity}</td>
+                                    <td className="py-4 px-2 text-right">₹{item.price.toLocaleString()}</td>
+                                    <td className="py-4 px-2 text-right text-red-600">
                                         {item.discount ? `-₹${item.discount.toLocaleString()}` : '-'}
                                     </td>
-                                    <td className="py-4 text-right">₹{((item.price * item.quantity) - (item.discount || 0)).toLocaleString()}</td>
+                                    <td className="py-4 px-2 text-right font-medium">₹{((item.price * item.quantity) - (item.discount || 0)).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
