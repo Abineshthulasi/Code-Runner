@@ -43,6 +43,8 @@ interface MonthlyData {
   totalSales: number; // New: Total worth of orders created in this month
   salesCash: number;
   salesBank: number;
+  expensesCash: number;
+  expensesBank: number;
 }
 
 // Helper for consistent local date parsing (YYYY-MM-DD -> Local Midnight)
@@ -154,6 +156,8 @@ export default function Reports() {
       let monthlyWithdrawals = 0;
       let monthlySalesCash = 0;
       let monthlySalesBank = 0;
+      let monthlyExpensesCash = 0;
+      let monthlyExpensesBank = 0;
 
       const monthOpeningBank = currentBank;
       const monthOpeningCash = currentCash;
@@ -176,8 +180,13 @@ export default function Reports() {
             }
           } else if (tx.type === 'expense') {
             monthlyExpenses += amount;
-            if (isCash) currentCash -= amount;
-            else currentBank -= amount;
+            if (isCash) {
+              currentCash -= amount;
+              monthlyExpensesCash += amount;
+            } else {
+              currentBank -= amount;
+              monthlyExpensesBank += amount;
+            }
           } else if (tx.type === 'deposit') {
             monthlyDeposits += amount;
             if (isCash) currentCash += amount;
@@ -256,7 +265,9 @@ export default function Reports() {
           prevMonthRecovery: monthlyPrevMonthRecovery,
           totalSales: totalOrderValue,
           salesCash: monthlySalesCash,
-          salesBank: monthlySalesBank
+          salesBank: monthlySalesBank,
+          expensesCash: monthlyExpensesCash,
+          expensesBank: monthlyExpensesBank
         });
       }
     }
@@ -478,9 +489,11 @@ export default function Reports() {
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right">Opening Bank</TableHead>
                     <TableHead className="text-right">Recv. (Bank)</TableHead>
+                    <TableHead className="text-right">Exp. (Bank)</TableHead>
                     <TableHead className="text-right">Closing Bank</TableHead>
                     <TableHead className="text-right">Opening Cash</TableHead>
                     <TableHead className="text-right">Recv. (Cash)</TableHead>
+                    <TableHead className="text-right">Exp. (Cash)</TableHead>
                     <TableHead className="text-right">Closing Cash</TableHead>
                     <TableHead className="text-right">Deposits</TableHead>
                     <TableHead className="text-right">Withdrawals</TableHead>
@@ -492,6 +505,7 @@ export default function Reports() {
                       <TableCell className="font-medium">{data.month}</TableCell>
                       <TableCell className="text-right">₹{data.openingBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-green-600">+₹{data.salesBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-₹{data.expensesBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingBank.toLocaleString()}
@@ -515,6 +529,7 @@ export default function Reports() {
                       </TableCell>
                       <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-green-600">+₹{data.salesCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-₹{data.expensesCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingCash.toLocaleString()}
