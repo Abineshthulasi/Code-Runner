@@ -43,6 +43,16 @@ interface MonthlyData {
   totalSales: number; // New: Total worth of orders created in this month
 }
 
+// Helper for consistent local date parsing (YYYY-MM-DD -> Local Midnight)
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  if (dateStr.includes('-')) {
+    const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(dateStr);
+};
+
 export default function Reports() {
   const store = useStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -90,17 +100,19 @@ export default function Reports() {
       });
     });
 
+
+
     // Sort by date sort is vital for running balance
-    allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    allTransactions.sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
 
     // Calculate opening balances for the selected year (global history)
     const selectedYearInt = parseInt(selectedYear);
     const startOfSelectedYear = new Date(selectedYearInt, 0, 1);
-    const firstTxDate = allTransactions.length > 0 ? new Date(allTransactions[0].date) : new Date();
+    const firstTxDate = allTransactions.length > 0 ? parseLocalDate(allTransactions[0].date) : new Date();
 
     // Also check first order date, as there might be unpaid orders before any payment
-    const sortedOrders = [...store.orders].sort((a, b) => new Date(a.orderDate || a.createdAt).getTime() - new Date(b.orderDate || b.createdAt).getTime());
-    const firstOrderDate = sortedOrders.length > 0 ? new Date(sortedOrders[0].orderDate || sortedOrders[0].createdAt) : new Date();
+    const sortedOrders = [...store.orders].sort((a, b) => parseLocalDate(a.orderDate || a.createdAt).getTime() - parseLocalDate(b.orderDate || b.createdAt).getTime());
+    const firstOrderDate = sortedOrders.length > 0 ? parseLocalDate(sortedOrders[0].orderDate || sortedOrders[0].createdAt) : new Date();
 
     // Earliest activity is min(firstTx, firstOrder)
     const firstActivityDate = firstTxDate < firstOrderDate ? firstTxDate : firstOrderDate;
@@ -112,14 +124,16 @@ export default function Reports() {
 
     // Calculate opening balance at start of year
     allTransactions.forEach(tx => {
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       if (txDate < startOfSelectedYear) {
         const amount = tx.amount;
+        const isCash = tx.mode.toLowerCase() === 'cash';
+
         if (tx.type === 'sale' || tx.type === 'deposit') {
-          if (tx.mode === 'Cash') yearOpeningCash += amount;
+          if (isCash) yearOpeningCash += amount;
           else yearOpeningBank += amount;
         } else if (tx.type === 'expense' || tx.type === 'withdraw') {
-          if (tx.mode === 'Cash') yearOpeningCash -= amount;
+          if (isCash) yearOpeningCash -= amount;
           else yearOpeningBank -= amount;
         }
       }
@@ -132,10 +146,6 @@ export default function Reports() {
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
       const thisMonthDate = new Date(selectedYearInt, monthIndex, 1);
 
-      // We calculate balances even if hidden (to keep running totals correct)
-      // But we only push to report if visible (or if we want to show empty months)
-      // Actually, we must process transactions to update currentBank/currentCash regardless.
-
       let monthlySales = 0;
       let monthlyExpenses = 0;
       let monthlyDeposits = 0;
@@ -146,21 +156,27 @@ export default function Reports() {
 
       // Process transactions for this month
       allTransactions.forEach(tx => {
-        const txDate = new Date(tx.date);
+        const txDate = parseLocalDate(tx.date);
         if (txDate.getFullYear() === selectedYearInt && txDate.getMonth() === monthIndex) {
           const amount = tx.amount;
+          const isCash = tx.mode.toLowerCase() === 'cash';
+
           if (tx.type === 'sale') {
             monthlySales += amount;
-            if (tx.mode === 'Cash') currentCash += amount; else currentBank += amount;
+            if (isCash) currentCash += amount;
+            else currentBank += amount;
           } else if (tx.type === 'expense') {
             monthlyExpenses += amount;
-            if (tx.mode === 'Cash') currentCash -= amount; else currentBank -= amount;
+            if (isCash) currentCash -= amount;
+            else currentBank -= amount;
           } else if (tx.type === 'deposit') {
             monthlyDeposits += amount;
-            if (tx.mode === 'Cash') currentCash += amount; else currentBank += amount;
+            if (isCash) currentCash += amount;
+            else currentBank += amount;
           } else if (tx.type === 'withdraw') {
             monthlyWithdrawals += amount;
-            if (tx.mode === 'Cash') currentCash -= amount; else currentBank -= amount;
+            if (isCash) currentCash -= amount;
+            else currentBank -= amount;
           }
         }
       });
@@ -170,10 +186,8 @@ export default function Reports() {
       let monthlyPrevMonthRecovery = 0;
 
       // 1. Pending Amount: Orders created in this month
-      // Logic: Total Value of Orders Created in Month - Payments Received *in this month* for those orders
-      // This gives the "Closing Pending Balance" for the month.
       const monthlyOrders = store.orders.filter(o => {
-        const d = new Date(o.orderDate || o.createdAt);
+        const d = parseLocalDate(o.orderDate || o.createdAt);
         return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex;
       });
 
@@ -182,7 +196,7 @@ export default function Reports() {
 
       monthlyOrders.forEach(order => {
         order.paymentHistory.forEach(payment => {
-          const pDate = new Date(payment.date);
+          const pDate = parseLocalDate(payment.date);
           if (pDate.getFullYear() === selectedYearInt && pDate.getMonth() === monthIndex) {
             collectedForThisMonthOrdersInThisMonth += Number(payment.amount);
           }
@@ -190,22 +204,18 @@ export default function Reports() {
       });
 
       monthlyPending = totalOrderValue - collectedForThisMonthOrdersInThisMonth;
-      // Ensure strictly non-negative (though logic should guarantee it unless data is weird)
       monthlyPending = Math.max(0, monthlyPending);
 
       // 2. Prev Month Recovery: Payments received in this month for orders from prev month
-      // We can't use 'monthlySales' from allTransactions easily because it lost order context.
-      // So we iterate store.orders again.
       store.orders.forEach(order => {
-        const oDate = new Date(order.orderDate || order.createdAt);
+        const oDate = parseLocalDate(order.orderDate || order.createdAt);
 
         // Check if payment is in this month
         order.paymentHistory.forEach(payment => {
-          const pDate = new Date(payment.date);
+          const pDate = parseLocalDate(payment.date);
           if (pDate.getFullYear() === selectedYearInt && pDate.getMonth() === monthIndex) {
             // Payment matches this month. Check if order is from previous month.
             const prevMonthDate = new Date(selectedYearInt, monthIndex - 1, 1);
-            // Check strictly if order is in the previous month (Year/Month matching)
             if (oDate.getFullYear() === prevMonthDate.getFullYear() && oDate.getMonth() === prevMonthDate.getMonth()) {
               monthlyPrevMonthRecovery += Number(payment.amount);
             }
@@ -261,7 +271,7 @@ export default function Reports() {
     const selectedYearInt = parseInt(selectedYear);
     return store.orders
       .filter(o => {
-        const d = new Date(o.orderDate || o.createdAt);
+        const d = parseLocalDate(o.orderDate || o.createdAt);
         return d.getFullYear() === selectedYearInt;
       })
       .reduce((sum, o) => sum + Number(o.balanceAmount), 0);
