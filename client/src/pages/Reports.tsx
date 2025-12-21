@@ -530,13 +530,8 @@ export default function Reports() {
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
 
-
                       {/* Bank Section */}
                       <TableCell className="text-right border-l">₹{data.openingBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-green-600">+₹{data.salesBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-green-600">+₹{data.depositsBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-red-600">-₹{data.expensesBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-red-600">-₹{data.withdrawalsBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-bold bg-slate-50 border-r">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingBank.toLocaleString()}
@@ -558,12 +553,9 @@ export default function Reports() {
                           </Button>
                         </div>
                       </TableCell>
+
                       {/* Cash Section */}
                       <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-green-600">+₹{data.salesCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-green-600">+₹{data.depositsCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-red-600">-₹{data.expensesCash.toLocaleString()}</TableCell>
-                      <TableCell className="text-right text-red-600">-₹{data.withdrawalsCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-bold bg-slate-50">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingCash.toLocaleString()}
@@ -585,6 +577,52 @@ export default function Reports() {
                           </Button>
                         </div>
                       </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Transaction Breakdown - New Card */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Monthly Transaction Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Month</TableHead>
+                    <TableHead className="text-right text-green-600 border-l">Sales (Bank)</TableHead>
+                    <TableHead className="text-right text-green-600">Add Fund (Bank)</TableHead>
+                    <TableHead className="text-right text-red-600">Exp. (Bank)</TableHead>
+                    <TableHead className="text-right text-red-600 border-r">Withd. (Bank)</TableHead>
+
+                    <TableHead className="text-right text-green-600">Sales (Cash)</TableHead>
+                    <TableHead className="text-right text-green-600">Add Fund (Cash)</TableHead>
+                    <TableHead className="text-right text-red-600">Exp. (Cash)</TableHead>
+                    <TableHead className="text-right text-red-600">Withd. (Cash)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {monthlyReport.map((data) => (
+                    <TableRow key={data.month}>
+                      <TableCell className="font-medium">{data.month}</TableCell>
+
+                      {/* Bank Transactions */}
+                      <TableCell className="text-right text-green-600 border-l">+₹{data.salesBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.depositsBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-₹{data.expensesBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600 border-r">-₹{data.withdrawalsBank.toLocaleString()}</TableCell>
+
+                      {/* Cash Transactions */}
+                      <TableCell className="text-right text-green-600">+₹{data.salesCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.depositsCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-₹{data.expensesCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-red-600">-₹{data.withdrawalsCash.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
