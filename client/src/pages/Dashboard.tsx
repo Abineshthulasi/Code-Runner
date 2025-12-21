@@ -46,8 +46,10 @@ export default function Dashboard() {
   // Local state for quick actions
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMode, setDepositMode] = useState<"Cash" | "Bank">("Cash");
+  const [depositDate, setDepositDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMode, setWithdrawMode] = useState<"Cash" | "Bank">("Cash");
+  const [withdrawDate, setWithdrawDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Edit Balance state
   const [isEditBalanceOpen, setIsEditBalanceOpen] = useState(false);
@@ -76,9 +78,10 @@ export default function Dashboard() {
       amount: Number(depositAmount),
       description: 'Quick Deposit via Dashboard',
       mode: depositMode,
-      date: new Date().toISOString().split('T')[0]
+      date: depositDate
     });
     setDepositAmount("");
+    setDepositDate(new Date().toISOString().split('T')[0]);
     toast({ title: "Funds Added", description: `₹${depositAmount} added to ${depositMode}.` });
   };
 
@@ -89,9 +92,10 @@ export default function Dashboard() {
       amount: Number(withdrawAmount),
       description: 'Quick Withdraw via Dashboard',
       mode: withdrawMode,
-      date: new Date().toISOString().split('T')[0]
+      date: withdrawDate
     });
     setWithdrawAmount("");
+    setWithdrawDate(new Date().toISOString().split('T')[0]);
     toast({ title: "Funds Withdrawn", description: `₹${withdrawAmount} withdrawn from ${withdrawMode}.` });
   };
 
@@ -247,10 +251,17 @@ export default function Dashboard() {
                   </div>
                   <div className="flex gap-2">
                     <Input
+                      type="date"
+                      value={depositDate}
+                      onChange={(e) => setDepositDate(e.target.value)}
+                      className="w-1/3"
+                    />
+                    <Input
                       placeholder="Type Amount"
                       type="number"
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
+                      className="flex-1"
                     />
                     <Button onClick={handleDeposit} className="bg-green-600 hover:bg-green-700">
                       Add
@@ -283,10 +294,17 @@ export default function Dashboard() {
                     </div>
                     <div className="flex gap-2">
                       <Input
+                        type="date"
+                        value={withdrawDate}
+                        onChange={(e) => setWithdrawDate(e.target.value)}
+                        className="w-1/3"
+                      />
+                      <Input
                         placeholder="Type Amount"
                         type="number"
                         value={withdrawAmount}
                         onChange={(e) => setWithdrawAmount(e.target.value)}
+                        className="flex-1"
                       />
                       <Button onClick={handleWithdraw} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
                         Enter
