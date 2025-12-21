@@ -256,6 +256,17 @@ export default function Reports() {
     }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0, pending: 0, prevMonthRecovery: 0, totalSales: 0 });
   }, [monthlyReport]);
 
+  // Calculate Current Outstanding for the selected year (Live status)
+  const currentYearPending = useMemo(() => {
+    const selectedYearInt = parseInt(selectedYear);
+    return store.orders
+      .filter(o => {
+        const d = new Date(o.orderDate || o.createdAt);
+        return d.getFullYear() === selectedYearInt;
+      })
+      .reduce((sum, o) => sum + Number(o.balanceAmount), 0);
+  }, [store.orders, selectedYear]);
+
   // Balance Adjustment Logic
   const [adjustingData, setAdjustingData] = useState<{
     monthIndex: number;
@@ -343,7 +354,7 @@ export default function Reports() {
               <Clock className="h-4 w-4 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">₹{yearTotals.pending.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-amber-600">₹{currentYearPending.toLocaleString()}</div>
             </CardContent>
           </Card>
 
