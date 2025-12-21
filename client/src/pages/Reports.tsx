@@ -529,7 +529,7 @@ export default function Reports() {
                   {monthlyReport.map((data) => (
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
-                      <TableCell className="font-medium border-b">{data.month}</TableCell>
+
 
                       {/* Bank Section */}
                       <TableCell className="text-right border-l">₹{data.openingBank.toLocaleString()}</TableCell>
