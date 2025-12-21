@@ -530,9 +530,7 @@ export default function Reports() {
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
 
-                      {/* Bank Section */}
-                      <TableCell className="text-right border-l">₹{data.openingBank.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-bold bg-slate-50 border-r">
+                      <TableCell className="text-right font-bold bg-slate-50 border-r border-l">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingBank.toLocaleString()}
                           <Button
@@ -554,8 +552,7 @@ export default function Reports() {
                         </div>
                       </TableCell>
 
-                      {/* Cash Section */}
-                      <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
+                      {/* Cash Balance Section */}
                       <TableCell className="text-right font-bold bg-slate-50">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingCash.toLocaleString()}
