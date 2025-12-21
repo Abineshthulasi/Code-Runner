@@ -44,7 +44,7 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         return isBefore(dueDate, today) && o.deliveryStatus !== 'Delivered' && o.workStatus !== 'Cancelled';
     });
 
-    const OrderTable = ({ orders, title, emptyMsg }: { orders: any[], title: string, emptyMsg: string }) => (
+    const OrderTable = ({ orders, title, emptyMsg, showDateType = 'due' }: { orders: any[], title: string, emptyMsg: string, showDateType?: 'due' | 'order' | 'updated' }) => (
         <Card className="mt-6">
             <CardHeader>
                 <CardTitle>{title} <Badge variant="secondary" className="ml-2">{orders.length}</Badge></CardTitle>
@@ -56,7 +56,7 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                             <TableRow>
                                 <TableHead>Order #</TableHead>
                                 <TableHead>Client</TableHead>
-                                <TableHead>Due Date</TableHead>
+                                <TableHead>Date</TableHead>
                                 <TableHead>Work Status</TableHead>
                                 <TableHead>Delivery</TableHead>
                                 <TableHead className="text-right">Balance</TableHead>
@@ -76,7 +76,17 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                             <div className="text-xs text-muted-foreground">{order.phone}</div>
                                         </TableCell>
                                         <TableCell>
-                                            {order.dueDate}
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">
+                                                    {showDateType === 'order' ? format(parseISO(order.orderDate), 'dd-MM-yyyy') :
+                                                        showDateType === 'updated' ? format(new Date(order.updatedAt || order.createdAt), 'dd-MM-yyyy') :
+                                                            order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : 'N/A'}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground uppercase">
+                                                    {showDateType === 'order' ? 'Ordered' :
+                                                        showDateType === 'updated' ? 'Updated' : 'Due'}
+                                                </span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline" className={
@@ -87,12 +97,14 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={
-                                                order.deliveryStatus === 'Delivered' ? 'bg-green-50 text-green-700' :
-                                                    order.deliveryStatus === 'Pending' ? 'bg-gray-50 text-gray-700' : ''
-                                            }>
-                                                {order.deliveryStatus}
-                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className={
+                                                    order.deliveryStatus === 'Delivered' ? 'bg-green-50 text-green-700' :
+                                                        order.deliveryStatus === 'Pending' ? 'bg-gray-50 text-gray-700' : ''
+                                                }>
+                                                    {order.deliveryStatus}
+                                                </Badge>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right text-red-600 font-medium">
                                             ₹{order.balanceAmount}
@@ -143,9 +155,9 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
 
             <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
 
-            <OrderTable orders={recentOrders} title="📝 Recently Taken Orders" emptyMsg="No recent orders." />
+            <OrderTable orders={recentOrders} title="📝 Recently Taken Orders" emptyMsg="No recent orders." showDateType="order" />
 
-            <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." />
+            <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." showDateType="updated" />
 
         </div>
     );
