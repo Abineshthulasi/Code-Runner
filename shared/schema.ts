@@ -13,6 +13,7 @@ export const orders = pgTable("orders", {
     description: string;
     quantity: number;
     price: number;
+    discount?: number;
   }>>(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   advanceAmount: decimal("advance_amount", { precision: 10, scale: 2 }).notNull().default('0'),

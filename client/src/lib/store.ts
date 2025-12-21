@@ -12,6 +12,7 @@ export interface OrderItem {
   description: string;
   quantity: number;
   price: number;
+  discount?: number;
 }
 
 export interface PaymentRecord {

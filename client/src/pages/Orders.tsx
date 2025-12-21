@@ -44,9 +44,8 @@ export default function Orders() {
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentNote, setPaymentNote] = useState("");
 
-  // Item Editing State
   const [isEditingItems, setIsEditingItems] = useState(false);
-  const [editedItems, setEditedItems] = useState<{ id: string; description: string; quantity: number; price: number }[]>([]);
+  const [editedItems, setEditedItems] = useState<{ id: string; description: string; quantity: number; price: number; discount?: number }[]>([]);
   const [isEditingOrderDate, setIsEditingOrderDate] = useState(false);
 
   // Payment Editing State
@@ -161,7 +160,7 @@ export default function Orders() {
   const handleSaveItems = async () => {
     if (!selectedOrder) return;
 
-    const newTotal = editedItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    const newTotal = editedItems.reduce((sum, item) => sum + ((Number(item.price) * Number(item.quantity)) - (Number(item.discount || 0))), 0);
     const totalPaid = selectedOrder.totalAmount - selectedOrder.balanceAmount;
     const newBalance = newTotal - totalPaid;
 
@@ -198,7 +197,7 @@ export default function Orders() {
   };
 
   const addEditedItem = () => {
-    setEditedItems([...editedItems, { id: Math.random().toString(), description: "", quantity: 1, price: 0 }]);
+    setEditedItems([...editedItems, { id: Math.random().toString(), description: "", quantity: 1, price: 0, discount: 0 }]);
   };
 
   const handleStartEditPayment = (payment: any) => {
@@ -492,6 +491,7 @@ export default function Orders() {
                         <TableHead>Description</TableHead>
                         <TableHead className="text-right w-20">Qty</TableHead>
                         <TableHead className="text-right w-24">Rate</TableHead>
+                        <TableHead className="text-right w-24">Discount</TableHead>
                         <TableHead className="text-right w-24">Amount</TableHead>
                         {isEditingItems && <TableHead className="w-10"></TableHead>}
                       </TableRow>
@@ -525,7 +525,15 @@ export default function Orders() {
                                 />
                               </TableCell>
                               <TableCell className="text-right">
-                                ₹{(item.price * item.quantity)}
+                                <Input
+                                  type="number"
+                                  value={item.discount || 0}
+                                  onChange={(e) => updateEditedItem(index, 'discount', Number(e.target.value))}
+                                  className="h-8 text-right text-red-600"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                ₹{(item.price * item.quantity) - (item.discount || 0)}
                               </TableCell>
                               <TableCell>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeEditedItem(index)}>
@@ -549,7 +557,10 @@ export default function Orders() {
                             <TableCell>{item.description}</TableCell>
                             <TableCell className="text-right">{item.quantity}</TableCell>
                             <TableCell className="text-right">₹{item.price}</TableCell>
-                            <TableCell className="text-right">₹{item.price * item.quantity}</TableCell>
+                            <TableCell className="text-right text-red-600">
+                              {item.discount ? `-₹${item.discount}` : '-'}
+                            </TableCell>
+                            <TableCell className="text-right">₹{(item.price * item.quantity) - (item.discount || 0)}</TableCell>
                           </TableRow>
                         ))
                       )}
@@ -559,7 +570,7 @@ export default function Orders() {
                         <TableCell colSpan={3} className="font-bold text-right pt-4">Total Order Value</TableCell>
                         <TableCell className="font-bold text-right pt-4">
                           ₹{isEditingItems
-                            ? editedItems.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0)
+                            ? editedItems.reduce((sum, item) => sum + ((Number(item.price) * Number(item.quantity)) - (Number(item.discount || 0))), 0)
                             : selectedOrder.totalAmount}
                         </TableCell>
                         {isEditingItems && <TableCell></TableCell>}
