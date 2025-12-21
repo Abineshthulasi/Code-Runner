@@ -40,6 +40,7 @@ interface MonthlyData {
   closingCash: number;
   pending: number; // New: Pending amount for orders of this month
   prevMonthRecovery: number; // New: Amount collected this month for prev month orders
+  totalSales: number; // New: Total worth of orders created in this month
 }
 
 export default function Reports() {
@@ -233,7 +234,8 @@ export default function Reports() {
           openingCash: monthOpeningCash,
           closingCash: currentCash,
           pending: monthlyPending,
-          prevMonthRecovery: monthlyPrevMonthRecovery
+          prevMonthRecovery: monthlyPrevMonthRecovery,
+          totalSales: totalOrderValue
         });
       }
     }
@@ -249,8 +251,9 @@ export default function Reports() {
       deposits: acc.deposits + month.deposits,
       withdrawals: acc.withdrawals + month.withdrawals,
       pending: acc.pending + month.pending,
-      prevMonthRecovery: acc.prevMonthRecovery + month.prevMonthRecovery
-    }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0, pending: 0, prevMonthRecovery: 0 });
+      prevMonthRecovery: acc.prevMonthRecovery + month.prevMonthRecovery,
+      totalSales: acc.totalSales + month.totalSales
+    }), { sales: 0, expenses: 0, deposits: 0, withdrawals: 0, pending: 0, prevMonthRecovery: 0, totalSales: 0 });
   }, [monthlyReport]);
 
   // Balance Adjustment Logic
@@ -366,7 +369,8 @@ export default function Reports() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Month</TableHead>
-                    <TableHead className="text-right">Sales</TableHead>
+                    <TableHead className="text-right">Total Order Worth</TableHead>
+                    <TableHead className="text-right">Recv. (Current)</TableHead>
                     <TableHead className="text-right">Recv. (Prev Month)</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
                     <TableHead className="text-right">Pending (Orders)</TableHead>
@@ -381,6 +385,9 @@ export default function Reports() {
                     return (
                       <TableRow key={data.month} className={!hasData ? 'opacity-50' : ''}>
                         <TableCell className="font-medium">{data.month}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          ₹{data.totalSales.toLocaleString()}
+                        </TableCell>
                         <TableCell className="text-right text-green-600">
                           ₹{data.sales.toLocaleString()}
                         </TableCell>
@@ -401,6 +408,7 @@ export default function Reports() {
                   })}
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell>Total ({selectedYear})</TableCell>
+                    <TableCell className="text-right font-bold">₹{yearTotals.totalSales.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-green-600">₹{yearTotals.sales.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-blue-600">₹{yearTotals.prevMonthRecovery.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-red-600">₹{yearTotals.expenses.toLocaleString()}</TableCell>
