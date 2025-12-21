@@ -76,6 +76,7 @@ export default function PrintBill() {
                                 <th className="py-3 font-bold text-sm uppercase">Item Description</th>
                                 <th className="py-3 text-right font-bold text-sm uppercase w-24">Qty</th>
                                 <th className="py-3 text-right font-bold text-sm uppercase w-32">Rate</th>
+                                <th className="py-3 text-right font-bold text-sm uppercase w-24">Discount</th>
                                 <th className="py-3 text-right font-bold text-sm uppercase w-32">Amount</th>
                             </tr>
                         </thead>
@@ -85,7 +86,10 @@ export default function PrintBill() {
                                     <td className="py-4">{item.description}</td>
                                     <td className="py-4 text-right">{item.quantity}</td>
                                     <td className="py-4 text-right">₹{item.price.toLocaleString()}</td>
-                                    <td className="py-4 text-right">₹{(item.price * item.quantity).toLocaleString()}</td>
+                                    <td className="py-4 text-right text-red-600">
+                                        {item.discount ? `-₹${item.discount.toLocaleString()}` : '-'}
+                                    </td>
+                                    <td className="py-4 text-right">₹{((item.price * item.quantity) - (item.discount || 0)).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
