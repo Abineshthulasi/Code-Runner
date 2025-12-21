@@ -30,6 +30,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { format, parseISO } from "date-fns";
 
 export default function Expenses() {
   const store = useStore();
@@ -218,7 +219,7 @@ export default function Expenses() {
                 ) : (
                   store.expenses.map((expense) => (
                     <TableRow key={expense.id}>
-                      <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{format(parseISO(expense.date), 'dd-MM-yyyy')}</TableCell>
                       <TableCell>{expense.category}</TableCell>
                       <TableCell>{expense.description}</TableCell>
                       <TableCell>{expense.mode}</TableCell>

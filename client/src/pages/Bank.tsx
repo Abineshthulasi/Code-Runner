@@ -21,6 +21,7 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Minus, Building2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
 export default function Bank() {
   const store = useStore();
@@ -260,7 +261,7 @@ function TransactionTable({ transactions, onDelete, onEdit }: {
           ) : (
             transactions.map((tx) => (
               <TableRow key={tx.id}>
-                <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
+                <TableCell>{format(parseISO(tx.date), 'dd-MM-yyyy')}</TableCell>
                 <TableCell>{tx.description}</TableCell>
                 <TableCell>{tx.mode}</TableCell>
                 <TableCell>
