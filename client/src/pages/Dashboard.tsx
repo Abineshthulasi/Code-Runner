@@ -254,7 +254,7 @@ export default function Dashboard() {
                       type="date"
                       value={depositDate}
                       onChange={(e) => setDepositDate(e.target.value)}
-                      className="w-1/3"
+                      className="w-[160px]"
                     />
                     <Input
                       placeholder="Type Amount"
@@ -297,7 +297,7 @@ export default function Dashboard() {
                         type="date"
                         value={withdrawDate}
                         onChange={(e) => setWithdrawDate(e.target.value)}
-                        className="w-1/3"
+                        className="w-[160px]"
                       />
                       <Input
                         placeholder="Type Amount"
