@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useMemo } from "react";
-import { TrendingUp, TrendingDown, Wallet, IndianRupee } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, IndianRupee, Clock } from "lucide-react";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -334,6 +334,16 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">₹{yearTotals.expenses.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Pending ({selectedYear})</CardTitle>
+              <Clock className="h-4 w-4 text-amber-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">₹{yearTotals.pending.toLocaleString()}</div>
             </CardContent>
           </Card>
 
