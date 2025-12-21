@@ -41,6 +41,8 @@ interface MonthlyData {
   pending: number; // New: Pending amount for orders of this month
   prevMonthRecovery: number; // New: Amount collected this month for prev month orders
   totalSales: number; // New: Total worth of orders created in this month
+  salesCash: number;
+  salesBank: number;
 }
 
 // Helper for consistent local date parsing (YYYY-MM-DD -> Local Midnight)
@@ -150,6 +152,8 @@ export default function Reports() {
       let monthlyExpenses = 0;
       let monthlyDeposits = 0;
       let monthlyWithdrawals = 0;
+      let monthlySalesCash = 0;
+      let monthlySalesBank = 0;
 
       const monthOpeningBank = currentBank;
       const monthOpeningCash = currentCash;
@@ -163,8 +167,13 @@ export default function Reports() {
 
           if (tx.type === 'sale') {
             monthlySales += amount;
-            if (isCash) currentCash += amount;
-            else currentBank += amount;
+            if (isCash) {
+              currentCash += amount;
+              monthlySalesCash += amount;
+            } else {
+              currentBank += amount;
+              monthlySalesBank += amount;
+            }
           } else if (tx.type === 'expense') {
             monthlyExpenses += amount;
             if (isCash) currentCash -= amount;
@@ -245,7 +254,9 @@ export default function Reports() {
           closingCash: currentCash,
           pending: monthlyPending,
           prevMonthRecovery: monthlyPrevMonthRecovery,
-          totalSales: totalOrderValue
+          totalSales: totalOrderValue,
+          salesCash: monthlySalesCash,
+          salesBank: monthlySalesBank
         });
       }
     }
@@ -466,8 +477,10 @@ export default function Reports() {
                   <TableRow>
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right">Opening Bank</TableHead>
+                    <TableHead className="text-right">Recv. (Bank)</TableHead>
                     <TableHead className="text-right">Closing Bank</TableHead>
                     <TableHead className="text-right">Opening Cash</TableHead>
+                    <TableHead className="text-right">Recv. (Cash)</TableHead>
                     <TableHead className="text-right">Closing Cash</TableHead>
                     <TableHead className="text-right">Deposits</TableHead>
                     <TableHead className="text-right">Withdrawals</TableHead>
@@ -478,6 +491,7 @@ export default function Reports() {
                     <TableRow key={data.month}>
                       <TableCell className="font-medium">{data.month}</TableCell>
                       <TableCell className="text-right">₹{data.openingBank.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.salesBank.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingBank.toLocaleString()}
@@ -500,6 +514,7 @@ export default function Reports() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">₹{data.openingCash.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-green-600">+₹{data.salesCash.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-semibold">
                         <div className="flex items-center justify-end gap-2">
                           ₹{data.closingCash.toLocaleString()}
