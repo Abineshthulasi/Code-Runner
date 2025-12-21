@@ -511,17 +511,11 @@ export default function Reports() {
                   <TableRow>
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right border-l">Open (Bank)</TableHead>
-                    <TableHead className="text-right text-green-600">Sales</TableHead>
-                    <TableHead className="text-right text-green-600">Add Fund</TableHead>
-                    <TableHead className="text-right text-red-600">Exp.</TableHead>
-                    <TableHead className="text-right text-red-600">Withd.</TableHead>
+
                     <TableHead className="text-right font-bold bg-slate-50 border-r">Close (Bank)</TableHead>
 
                     <TableHead className="text-right">Open (Cash)</TableHead>
-                    <TableHead className="text-right text-green-600">Sales</TableHead>
-                    <TableHead className="text-right text-green-600">Add Fund</TableHead>
-                    <TableHead className="text-right text-red-600">Exp.</TableHead>
-                    <TableHead className="text-right text-red-600">Withd.</TableHead>
+
                     <TableHead className="text-right font-bold bg-slate-50">Close (Cash)</TableHead>
                   </TableRow>
                 </TableHeader>
