@@ -527,7 +527,7 @@ export default function Orders() {
                 <DialogTitle className="flex items-center justify-between">
                   <span>Order #{selectedOrder.orderNumber}</span>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => window.print()}>
+                    <Button variant="ghost" size="icon" onClick={() => window.open(`/print-bill/${selectedOrder.id}`, '_blank')}>
                       <Printer className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="text-destructive" onClick={handleDeleteOrder}>
