@@ -251,9 +251,9 @@ export default function Reports() {
         order.paymentHistory.forEach(payment => {
           const pDate = parseLocalDate(payment.date);
           if (pDate.getFullYear() === selectedYearInt && pDate.getMonth() === monthIndex) {
-            // Payment matches this month. Check if order is from previous month.
-            const prevMonthDate = new Date(selectedYearInt, monthIndex - 1, 1);
-            if (oDate.getFullYear() === prevMonthDate.getFullYear() && oDate.getMonth() === prevMonthDate.getMonth()) {
+            // Payment matches this month. Check if order is from ANY previous month (Arrears).
+            const startOfReportMonth = new Date(selectedYearInt, monthIndex, 1);
+            if (oDate < startOfReportMonth) {
               monthlyPrevMonthRecovery += Number(payment.amount);
             }
           }
@@ -447,7 +447,7 @@ export default function Reports() {
                     <TableHead>Month</TableHead>
                     <TableHead className="text-right">Total Order Worth</TableHead>
                     <TableHead className="text-right">Recv. (Current)</TableHead>
-                    <TableHead className="text-right">Recv. (Prev Month)</TableHead>
+                    <TableHead className="text-right">Recv. (Past)</TableHead>
                     <TableHead className="text-right">Expenses</TableHead>
                     <TableHead className="text-right">Pending (Orders)</TableHead>
                     <TableHead className="text-right">Net Profit/Loss</TableHead>
