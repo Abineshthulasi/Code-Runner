@@ -262,20 +262,33 @@ function TransactionTable({ transactions, onDelete, onEdit }: {
     return <div className="text-center py-8 text-muted-foreground">No transactions yet</div>;
   }
 
+  // Sort transactions by date desc first
+  const sortedTransactions = [...transactions].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   // Group transactions by month
-  const groupedTransactions = transactions.reduce((acc, tx) => {
+  const groupedTransactions = sortedTransactions.reduce((acc, tx) => {
     const monthYear = format(parseISO(tx.date), 'MMMM yyyy');
     if (!acc[monthYear]) acc[monthYear] = [];
     acc[monthYear].push(tx);
     return acc;
   }, {} as Record<string, any[]>);
 
+  // Sort groups by date desc
+  const sortedGroups = Object.entries(groupedTransactions).sort(([monthA], [monthB]) => {
+    // Parse "January 2024" to compare
+    const dateA = new Date(monthA);
+    const dateB = new Date(monthB);
+    return dateB.getTime() - dateA.getTime();
+  });
+
   return (
     <>
       <Accordion type="single" collapsible className="w-full">
-        {Object.entries(groupedTransactions).map(([month, monthTxs]) => {
-          const depositTotal = monthTxs.filter(t => t.type === 'Deposit').reduce((sum, t) => sum + t.amount, 0);
-          const withdrawTotal = monthTxs.filter(t => t.type === 'Withdraw').reduce((sum, t) => sum + t.amount, 0);
+        {(sortedGroups as [string, any[]][]).map(([month, monthTxs]) => {
+          const depositTotal = monthTxs.filter((t: any) => t.type === 'Deposit').reduce((sum: number, t: any) => sum + t.amount, 0);
+          const withdrawTotal = monthTxs.filter((t: any) => t.type === 'Withdraw').reduce((sum: number, t: any) => sum + t.amount, 0);
 
           return (
             <AccordionItem key={month} value={month}>
