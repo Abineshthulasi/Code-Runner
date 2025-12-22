@@ -393,7 +393,6 @@ export default function Orders() {
                           <TableHead>ORDER NO</TableHead>
                           <TableHead>DATE</TableHead>
                           <TableHead>CLIENT</TableHead>
-                          <TableHead>ITEMS</TableHead>
                           <TableHead>WORK STATUS</TableHead>
                           <TableHead>DELIVERY STATUS</TableHead>
                           <TableHead>PAYMENT</TableHead>
@@ -425,11 +424,6 @@ export default function Orders() {
                                 <div>
                                   <div className="font-medium">{order.clientName}</div>
                                   <div className="text-xs text-muted-foreground">{order.phone}</div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm">
-                                  {order.items.map(i => i.quantity + " x " + i.description).join(", ")}
                                 </div>
                               </TableCell>
                               <TableCell>
