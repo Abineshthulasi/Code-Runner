@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -23,12 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2 } from "lucide-react";
+import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { format, parseISO } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Orders() {
   const store = useStore();
@@ -63,6 +72,14 @@ export default function Orders() {
     const dateB = new Date(b.orderDate).getTime();
     return dateB - dateA; // Descending
   });
+
+  // Group by Month
+  const groupedOrders = filteredOrders.reduce((acc, order) => {
+    const monthYear = format(parseISO(order.orderDate), 'MMMM yyyy');
+    if (!acc[monthYear]) acc[monthYear] = [];
+    acc[monthYear].push(order);
+    return acc;
+  }, {} as Record<string, Order[]>);
 
   const formatDisplayDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "";
@@ -315,487 +332,453 @@ export default function Orders() {
       balanceAmount: newBalance,
       paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
     });
+    toast({ title: "Payment Deleted" });
+  };
 
-    toast({ title: "Payment Deleted", variant: "destructive" });
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const toggleRow = (id: string) => {
+    setExpandedRow(expandedRow === id ? null : id);
   };
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Order Database</h2>
-            <p className="text-muted-foreground">Track commissions, status, and payments.</p>
+            <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
+            <p className="text-muted-foreground">Manage order status and payments</p>
           </div>
-          <Button asChild className="bg-primary hover:bg-primary/90">
-            <a href="/billing">
-              <Plus className="w-4 h-4 mr-2" /> New Order
-            </a>
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by Phone / Name / ID..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex w-full md:w-auto gap-4">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search Client or Order #"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> New Order
+            </Button>
           </div>
         </div>
 
-        <div className="border rounded-md bg-card overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>CLIENT</TableHead>
-                <TableHead>ORDER DATE</TableHead>
-                <TableHead>WORK STATUS</TableHead>
-                <TableHead>DELIVERY</TableHead>
-                <TableHead>PAYMENT</TableHead>
-                <TableHead className="text-right">TOTAL</TableHead>
-                <TableHead className="text-right">BALANCE</TableHead>
-                <TableHead className="text-right">ACTIONS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    No orders found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-mono text-xs">{order.orderNumber}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{order.clientName}</div>
-                      <div className="text-xs text-muted-foreground">{order.phone}</div>
-                    </TableCell>
-                    <TableCell className="text-xs">{formatDisplayDate(order.orderDate)}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
-                        order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                        {order.workStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                        }`}>
-                        {order.deliveryStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' :
-                        order.paymentStatus === 'Unpaid' ? 'bg-red-100 text-red-700' :
-                          'bg-orange-100 text-orange-700'
-                        }`}>
-                        {order.paymentStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">₹{order.totalAmount}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">₹{order.balanceAmount}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setPendingUpdates({}); // Reset pending changes
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(`/print-bill/${order.id}`, '_blank')}
-                      >
-                        <Printer className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        {Object.keys(groupedOrders).length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No orders found</div>
+        ) : (
+          <Accordion type="single" collapsible className="w-full">
+            {Object.entries(groupedOrders).map(([month, monthOrders]) => {
+              // Calculate month statistics
+              const totalValue = monthOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+              const ordersCount = monthOrders.length;
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex justify-between items-center">
-                <span>Order: {selectedOrder?.orderNumber}</span>
-                <div className="flex items-center gap-2">
-                  {isEditingOrderDate ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="date"
-                        value={selectedOrder?.orderDate}
-                        onChange={(e) => handleUpdateOrderDate(e.target.value)}
-                        className="h-8 w-36"
-                      />
-                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setIsEditingOrderDate(false)}>
-                        <Save className="w-3 h-3 text-green-600" />
+              return (
+                <AccordionItem key={month} value={month}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex justify-between w-full pr-4">
+                      <span className="font-semibold">{month}</span>
+                      <div className="flex gap-4 text-sm font-normal text-muted-foreground">
+                        <span>{ordersCount} Orders</span>
+                        <span className="text-primary font-medium">Total: ₹{totalValue.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[50px]"></TableHead>
+                          <TableHead>ORDER NO</TableHead>
+                          <TableHead>DATE</TableHead>
+                          <TableHead>CLIENT</TableHead>
+                          <TableHead>ITEMS</TableHead>
+                          <TableHead>WORK STATUS</TableHead>
+                          <TableHead>PAYMENT</TableHead>
+                          <TableHead className="text-right">TOTAL</TableHead>
+                          <TableHead className="text-right">BALANCE</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {monthOrders.map((order) => (
+                          <>
+                            <TableRow
+                              key={order.id}
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setPendingUpdates({});
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <TableCell onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRow(order.id);
+                              }}>
+                                {expandedRow === order.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                              </TableCell>
+                              <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                              <TableCell>{formatDisplayDate(order.orderDate)}</TableCell>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{order.clientName}</div>
+                                  <div className="text-xs text-muted-foreground">{order.phone}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  {order.items.map(i => i.quantity + " x " + i.description).join(", ")}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                      ${order.workStatus === 'Ready' ? 'bg-green-100 text-green-700' :
+                                    order.workStatus === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                                      order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'}`}>
+                                  {order.workStatus}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                      ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' :
+                                    order.paymentStatus === 'Partial' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-red-100 text-red-700'}`}>
+                                  {order.paymentStatus}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">₹{order.totalAmount.toLocaleString()}</TableCell>
+                              <TableCell className="text-right font-medium text-red-600">
+                                {order.paymentStatus !== 'Paid' ? `₹${Number(order.balanceAmount).toLocaleString()}` : '-'}
+                              </TableCell>
+                            </TableRow>
+                            {expandedRow === order.id && (
+                              <TableRow className="bg-muted/30">
+                                <TableCell colSpan={9}>
+                                  <div className="p-4 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <h4 className="font-semibold mb-2">Item Details</h4>
+                                        <div className="text-sm space-y-1">
+                                          {order.items.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between gap-8">
+                                              <span>{item.description} (x{item.quantity})</span>
+                                              <span>₹{item.price}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <h4 className="font-semibold mb-2">Payment History</h4>
+                                        <div className="text-sm space-y-1">
+                                          {order.paymentHistory.length === 0 ? (
+                                            <span className="text-muted-foreground">No payments recorded</span>
+                                          ) : (
+                                            order.paymentHistory.map((p, idx) => (
+                                              <div key={idx} className="flex gap-4">
+                                                <span className="text-muted-foreground">{formatDisplayDate(p.date)}</span>
+                                                <span className="font-medium">₹{p.amount}</span>
+                                                <span className="text-xs px-1.5 py-0.5 bg-secondary rounded">{p.mode}</span>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {order.notes && (
+                                      <div className="mt-2 text-sm text-muted-foreground border-t pt-2">
+                                        <strong>Note: </strong> {order.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
+
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            setIsEditDialogOpen(false);
+            setPendingUpdates({});
+          }
+        }}>
+          {selectedOrder && (
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between">
+                  <span>Order #{selectedOrder.orderNumber}</span>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => window.print()}>
+                      <Printer className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={handleDeleteOrder}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Order Date - Editable */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                  <Label>Client Details</Label>
+                  <div className="mt-1 font-medium text-lg">{selectedOrder.clientName}</div>
+                  <div className="text-muted-foreground">{selectedOrder.phone}</div>
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2">
+                    Order Date
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="date"
+                      value={selectedOrder.orderDate ? selectedOrder.orderDate.split('T')[0] : ''}
+                      onChange={(e) => handleUpdateOrderDate(e.target.value)}
+                      className="w-[160px]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2">Balance Amount</Label>
+                  <div className="mt-1 text-2xl font-bold text-red-600">
+                    ₹{selectedOrder.balanceAmount.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Section */}
+              <div className="grid grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
+                <div className="space-y-2">
+                  <Label>Work Status</Label>
+                  <Select
+                    value={selectedOrder.workStatus}
+                    onValueChange={handleUpdateWorkStatus}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Ready">Ready</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Delivery Status</Label>
+                  <Select
+                    value={selectedOrder.deliveryStatus}
+                    onValueChange={handleUpdateDeliveryStatus}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                      <SelectItem value="Returned">Returned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Items Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Order Items</h3>
+                  {!isEditingItems ? (
+                    <Button variant="secondary" size="sm" onClick={handleStartEditItems}>
+                      <Edit2 className="h-3 w-3 mr-2" /> Edit Items
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setIsEditingItems(false)}>Cancel</Button>
+                      <Button size="sm" onClick={handleSaveItems}>Save Items</Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border rounded-md p-4 space-y-2">
+                  {/* Edit Mode */}
+                  {isEditingItems ? (
+                    <div className="space-y-4">
+                      {editedItems.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 items-end border-b pb-4 last:border-0 last:pb-0">
+                          <div className="col-span-5">
+                            <Label className="text-xs">Description</Label>
+                            <Input
+                              value={item.description}
+                              onChange={(e) => updateEditedItem(idx, 'description', e.target.value)}
+                              placeholder="Item Name"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Label className="text-xs">Qty</Label>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateEditedItem(idx, 'quantity', Number(e.target.value))}
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <Label className="text-xs">Price</Label>
+                            <Input
+                              type="number"
+                              value={item.price}
+                              onChange={(e) => updateEditedItem(idx, 'price', Number(e.target.value))}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Button variant="ghost" size="icon" className="text-destructive mt-4" onClick={() => removeEditedItem(idx)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button variant="outline" className="w-full" onClick={addEditedItem}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Item
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditingOrderDate(true)}>
-                      <span className="text-sm font-normal text-muted-foreground group-hover:text-primary transition-colors">
-                        {formatDisplayDate(selectedOrder?.orderDate)}
-                      </span>
-                      <Edit2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  )}
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-
-            {selectedOrder && (
-              <div className="space-y-6 py-4">
-                {/* Order Items */}
-                {/* Order Items */}
-                <div className="bg-muted/30 rounded-lg p-4 border">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold text-sm">Order Items</h3>
-                    {user?.role === 'admin' || user?.role === 'manager' ? (
-                      !isEditingItems ? (
-                        <Button variant="ghost" size="sm" onClick={handleStartEditItems} className="h-8">
-                          <Edit2 className="w-3 h-3 mr-2" /> Edit Items
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => setIsEditingItems(false)} className="h-8 text-muted-foreground">
-                            <X className="w-3 h-3 mr-2" /> Cancel
-                          </Button>
-                          <Button size="sm" onClick={handleSaveItems} className="h-8">
-                            <Save className="w-3 h-3 mr-2" /> Save
-                          </Button>
+                    // View Mode
+                    <div className="divide-y">
+                      {selectedOrder.items.map((item, i) => (
+                        <div key={i} className="flex justify-between py-2">
+                          <span>{item.description} <span className="text-muted-foreground">x{item.quantity}</span></span>
+                          <span className="font-medium">₹{item.price * item.quantity}</span>
                         </div>
-                      )
-                    ) : null}
-                  </div>
-
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right w-20">Qty</TableHead>
-                        <TableHead className="text-right w-24">Rate</TableHead>
-                        <TableHead className="text-right w-24">Discount</TableHead>
-                        <TableHead className="text-right w-24">Amount</TableHead>
-                        {isEditingItems && <TableHead className="w-10"></TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isEditingItems ? (
-                        <>
-                          {editedItems.map((item, index) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <Input
-                                  value={item.description}
-                                  onChange={(e) => updateEditedItem(index, 'description', e.target.value)}
-                                  className="h-8"
-                                />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Input
-                                  type="number"
-                                  value={item.quantity}
-                                  onChange={(e) => updateEditedItem(index, 'quantity', Number(e.target.value))}
-                                  className="h-8 text-right"
-                                />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Input
-                                  type="number"
-                                  value={item.price}
-                                  onChange={(e) => updateEditedItem(index, 'price', Number(e.target.value))}
-                                  className="h-8 text-right"
-                                />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Input
-                                  type="number"
-                                  value={item.discount || 0}
-                                  onChange={(e) => updateEditedItem(index, 'discount', Number(e.target.value))}
-                                  className="h-8 text-right text-red-600"
-                                />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                ₹{(item.price * item.quantity) - (item.discount || 0)}
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeEditedItem(index)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          <TableRow>
-                            <TableCell colSpan={5}>
-                              <Button variant="outline" size="sm" className="w-full border-dashed" onClick={addEditedItem}>
-                                <Plus className="w-4 h-4 mr-2" /> Add Item
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        </>
-                      ) : (
-                        // Read Only View
-                        selectedOrder.items.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right">₹{item.price}</TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {item.discount ? `-₹${item.discount}` : '-'}
-                            </TableCell>
-                            <TableCell className="text-right">₹{(item.price * item.quantity) - (item.discount || 0)}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
-
-                      {/* Total Row - changes based on mode */}
-                      <TableRow>
-                        <TableCell colSpan={3} className="font-bold text-right pt-4">Total Order Value</TableCell>
-                        <TableCell className="font-bold text-right pt-4">
-                          ₹{isEditingItems
-                            ? editedItems.reduce((sum, item) => sum + ((Number(item.price) * Number(item.quantity)) - (Number(item.discount || 0))), 0)
-                            : selectedOrder.totalAmount}
-                        </TableCell>
-                        {isEditingItems && <TableCell></TableCell>}
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Status Updates */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Work Status</Label>
-                    <Select
-                      defaultValue={selectedOrder.workStatus}
-                      onValueChange={handleUpdateWorkStatus}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Ready">Ready</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Delivery Status</Label>
-                    <Select
-                      defaultValue={selectedOrder.deliveryStatus}
-                      onValueChange={handleUpdateDeliveryStatus}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
-                        <SelectItem value="Returned">Returned</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Payment Section */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold border-b pb-2">Payment History</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Mode</TableHead>
-                        <TableHead>Note</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedOrder.paymentHistory.map(p => (
-                        <TableRow key={p.id}>
-                          {editingPaymentId === p.id ? (
-                            <>
-                              <TableCell>
-                                <Input
-                                  type="date"
-                                  value={editedPaymentData.date}
-                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, date: e.target.value })}
-                                  className="h-8 w-32"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={editedPaymentData.mode}
-                                  onValueChange={(v) => setEditedPaymentData({ ...editedPaymentData, mode: v })}
-                                >
-                                  <SelectTrigger className="h-8 w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Cash">Cash</SelectItem>
-                                    <SelectItem value="UPI">UPI</SelectItem>
-                                    <SelectItem value="Bank">Bank</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  value={editedPaymentData.note}
-                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, note: e.target.value })}
-                                  className="h-8 text-xs"
-                                  placeholder="Note"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  value={editedPaymentData.amount}
-                                  onChange={(e) => setEditedPaymentData({ ...editedPaymentData, amount: e.target.value })}
-                                  className="h-8 w-24 text-right ml-auto"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSavePayment}>
-                                    <Save className="w-4 h-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingPaymentId(null)}>
-                                    <X className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </>
-                          ) : (
-                            <>
-                              <TableCell>{p.date}</TableCell>
-                              <TableCell>{p.mode}</TableCell>
-                              <TableCell className="text-xs text-muted-foreground">{p.note}</TableCell>
-                              <TableCell className="text-right">₹{p.amount}</TableCell>
-                              <TableCell className="w-20 text-right">
-                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEditPayment(p)}>
-                                  <Edit2 className="w-3 h-3" />
-                                </Button>
-                                {(user?.role === 'admin' || user?.role === 'manager') && (
-                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeletePayment(p.id)}>
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </>
-                          )}
-                        </TableRow>
                       ))}
-                      <TableRow>
-                        <TableCell colSpan={3} className="font-bold text-right">Total Paid</TableCell>
-                        <TableCell className="font-bold text-right text-green-600">
-                          ₹{selectedOrder.totalAmount - selectedOrder.balanceAmount}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell colSpan={3} className="font-bold text-right">Balance Due</TableCell>
-                        <TableCell className="font-bold text-right text-red-600">
-                          ₹{selectedOrder.balanceAmount}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                    </div>
+                  )}
 
-                  {selectedOrder.balanceAmount > 0 && (
-                    <div className="bg-muted p-4 rounded-lg space-y-4">
-                      <h4 className="font-medium text-sm">Add Partial Payment</h4>
-                      <div className="grid grid-cols-3 gap-3">
-                        <Input
-                          placeholder="Amount"
-                          type="number"
-                          value={paymentAmount}
-                          onChange={(e) => setPaymentAmount(e.target.value)}
-                        />
-                        <Select
-                          value={paymentMode}
-                          onValueChange={(v: any) => setPaymentMode(v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Cash">Cash</SelectItem>
-                            <SelectItem value="UPI">UPI</SelectItem>
-                            <SelectItem value="Bank">Bank Transfer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button onClick={handleAddPayment} size="sm">Record</Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          type="date"
-                          value={paymentDate}
-                          onChange={(e) => setPaymentDate(e.target.value)}
-                          className="h-8"
-                        />
-                        <Input
-                          placeholder="Note (Optional)"
-                          value={paymentNote}
-                          onChange={(e) => setPaymentNote(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
+                  {!isEditingItems && (
+                    <div className="flex justify-between pt-4 font-bold border-t">
+                      <span>Total Amount</span>
+                      <span>₹{selectedOrder.totalAmount.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Destructive Actions */}
-                <div className="flex justify-between pt-6 border-t">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleCancelOrder}
-                    disabled={selectedOrder.workStatus === 'Cancelled'}
-                  >
-                    <Ban className="w-4 h-4 mr-2" /> Cancel Order
-                  </Button>
+              {/* Payment Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Payments</h3>
 
-                  {user?.role === 'admin' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={handleDeleteOrder}
+                {/* Payment History List with Edit/Delete */}
+                {selectedOrder.paymentHistory.length > 0 && (
+                  <div className="border rounded-md divide-y">
+                    {selectedOrder.paymentHistory.map((payment) => (
+                      <div key={payment.id} className="p-3 flex items-center justify-between">
+                        {editingPaymentId === payment.id ? (
+                          // Editing Payment Row
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                            <Input
+                              type="date"
+                              value={editedPaymentData.date}
+                              onChange={(e) => setEditedPaymentData({ ...editedPaymentData, date: e.target.value })}
+                            />
+                            <Input
+                              type="number"
+                              value={editedPaymentData.amount}
+                              onChange={(e) => setEditedPaymentData({ ...editedPaymentData, amount: e.target.value })}
+                            />
+                            <Select
+                              value={editedPaymentData.mode}
+                              onValueChange={(val) => setEditedPaymentData({ ...editedPaymentData, mode: val })}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
+                                <SelectItem value="Bank">Bank</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <div className="flex gap-1 justify-end">
+                              <Button size="icon" variant="ghost" onClick={() => setEditingPaymentId(null)}><X className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="text-green-600" onClick={handleSavePayment}><Save className="h-4 w-4" /></Button>
+                            </div>
+                          </div>
+                        ) : (
+                          // View Payment Row
+                          <>
+                            <div className="flex flex-col md:flex-row md:gap-6">
+                              <span className="text-muted-foreground w-24">{formatDisplayDate(payment.date)}</span>
+                              <span className="font-medium w-24">₹{payment.amount}</span>
+                              <span className="text-sm px-2 py-0.5 bg-secondary rounded w-fit">{payment.mode}</span>
+                              {payment.note && <span className="text-sm text-muted-foreground italic">"{payment.note}"</span>}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEditPayment(payment)}>
+                                <Edit2 className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeletePayment(payment.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add New Payment */}
+                <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                  <div className="font-medium text-sm">Record New Payment</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      type="number"
+                      placeholder="Amount"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                    />
+                    <Select
+                      value={paymentMode}
+                      onValueChange={(value: "Cash" | "UPI" | "Bank") => setPaymentMode(value)}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" /> Delete Permanently
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                  <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                    Close
-                  </Button>
-                  <Button onClick={handleSaveChanges} className="bg-green-600 hover:bg-green-700">
-                    Save Changes
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="UPI">UPI</SelectItem>
+                        <SelectItem value="Bank">Bank Account</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
+                    type="date"
+                    value={paymentDate}
+                    onChange={(e) => setPaymentDate(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Note (Optional)"
+                    value={paymentNote}
+                    onChange={(e) => setPaymentNote(e.target.value)}
+                  />
+                  <Button className="w-full" onClick={handleAddPayment}>
+                    Add Payment
                   </Button>
                 </div>
               </div>
-            )}
-          </DialogContent>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Close</Button>
+                <Button onClick={handleSaveChanges}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          )}
         </Dialog>
       </div>
     </Layout>
