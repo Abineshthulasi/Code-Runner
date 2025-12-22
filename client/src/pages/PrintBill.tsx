@@ -4,6 +4,7 @@ import { useStore } from "@/lib/store";
 import { useEffect } from "react";
 import { Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format, parseISO } from "date-fns";
 
 export default function PrintBill() {
     const [, params] = useRoute("/print-bill/:id");
@@ -50,7 +51,7 @@ export default function PrintBill() {
                     <div className="text-right text-sm">
                         <h2 className="font-bold text-lg mb-1">INVOICE</h2>
                         <p className="text-gray-600">Order #: {order.orderNumber}</p>
-                        <p className="text-gray-600">Date: {new Date(order.orderDate).toLocaleDateString()}</p>
+                        <p className="text-gray-600">Date: {format(parseISO(order.orderDate), 'dd-MM-yyyy')}</p>
                     </div>
                 </div>
 
@@ -63,7 +64,7 @@ export default function PrintBill() {
                     </div>
                     <div className="text-right">
                         <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Details</h3>
-                        <p><span className="text-gray-600">Due Date:</span> {order.dueDate ? new Date(order.dueDate).toLocaleDateString() : 'N/A'}</p>
+                        <p><span className="text-gray-600">Due Date:</span> {order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : 'N/A'}</p>
                         <p><span className="text-gray-600">Status:</span> {order.paymentStatus}</p>
                     </div>
                 </div>
