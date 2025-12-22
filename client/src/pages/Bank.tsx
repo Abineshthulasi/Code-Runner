@@ -12,12 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Minus, Building2 } from "lucide-react";
@@ -252,61 +255,87 @@ function TransactionTable({ transactions, onDelete, onEdit }: {
     }
   };
 
+  if (transactions.length === 0) {
+    return <div className="text-center py-8 text-muted-foreground">No transactions yet</div>;
+  }
+
+  // Group transactions by month
+  const groupedTransactions = transactions.reduce((acc, tx) => {
+    const monthYear = format(parseISO(tx.date), 'MMMM yyyy');
+    if (!acc[monthYear]) acc[monthYear] = [];
+    acc[monthYear].push(tx);
+    return acc;
+  }, {} as Record<string, any[]>);
+
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>DATE</TableHead>
-            <TableHead>DESCRIPTION</TableHead>
-            <TableHead>MODE</TableHead>
-            <TableHead>TYPE</TableHead>
-            <TableHead className="text-right">AMOUNT</TableHead>
-            <TableHead className="w-[100px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                No transactions yet
-              </TableCell>
-            </TableRow>
-          ) : (
-            transactions.map((tx) => (
-              <TableRow key={tx.id}>
-                <TableCell>{format(parseISO(tx.date), 'dd-MM-yyyy')}</TableCell>
-                <TableCell>{tx.description}</TableCell>
-                <TableCell>{tx.mode}</TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${tx.type === 'Deposit' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                    {tx.type}
-                  </span>
-                </TableCell>
-                <TableCell className={`text-right font-medium ${tx.type === 'Deposit' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                  {tx.type === 'Deposit' ? '+' : '-'}₹{tx.amount}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => startEdit(tx)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50" onClick={() => {
-                      if (confirm('Are you sure you want to delete this transaction?')) {
-                        onDelete(tx.id, tx.type, tx.amount, tx.mode);
-                      }
-                    }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+      <Accordion type="single" collapsible className="w-full">
+        {Object.entries(groupedTransactions).map(([month, monthTxs]) => {
+          const depositTotal = monthTxs.filter(t => t.type === 'Deposit').reduce((sum, t) => sum + t.amount, 0);
+          const withdrawTotal = monthTxs.filter(t => t.type === 'Withdraw').reduce((sum, t) => sum + t.amount, 0);
+
+          return (
+            <AccordionItem key={month} value={month}>
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex justify-between w-full pr-4">
+                  <span className="font-semibold">{month}</span>
+                  <div className="flex gap-4 text-sm font-normal text-muted-foreground">
+                    <span className="text-green-600">In: ₹{depositTotal.toLocaleString()}</span>
+                    <span className="text-red-600">Out: ₹{withdrawTotal.toLocaleString()}</span>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>DATE</TableHead>
+                      <TableHead>DESCRIPTION</TableHead>
+                      <TableHead>MODE</TableHead>
+                      <TableHead>TYPE</TableHead>
+                      <TableHead className="text-right">AMOUNT</TableHead>
+                      <TableHead className="w-[100px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {monthTxs.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell>{format(parseISO(tx.date), 'dd-MM-yyyy')}</TableCell>
+                        <TableCell>{tx.description}</TableCell>
+                        <TableCell>{tx.mode}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${tx.type === 'Deposit' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                            {tx.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className={`text-right font-medium ${tx.type === 'Deposit' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                          {tx.type === 'Deposit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => startEdit(tx)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-50" onClick={() => {
+                              if (confirm('Are you sure you want to delete this transaction?')) {
+                                onDelete(tx.id, tx.type, tx.amount, tx.mode);
+                              }
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
 
       <Dialog open={!!editingId} onOpenChange={(open) => !open && setEditingId(null)}>
         <DialogContent>

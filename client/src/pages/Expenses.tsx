@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -198,59 +204,80 @@ export default function Expenses() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>DATE</TableHead>
-                  <TableHead>CATEGORY</TableHead>
-                  <TableHead>DETAILS</TableHead>
-                  <TableHead>MODE</TableHead>
-                  <TableHead className="text-right">AMOUNT</TableHead>
-                  <TableHead className="text-right">ACTIONS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {store.expenses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No expenses recorded
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  store.expenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>{format(parseISO(expense.date), 'dd-MM-yyyy')}</TableCell>
-                      <TableCell>{expense.category}</TableCell>
-                      <TableCell>{expense.description}</TableCell>
-                      <TableCell>{expense.mode}</TableCell>
-                      <TableCell className="text-right font-medium">₹{expense.amount}</TableCell>
-                      <TableCell className="text-right flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => openEditDialog(expense)}
-                        >
-                          <span className="sr-only">Edit</span>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {(user?.role === 'admin' || user?.role === 'manager') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive h-8 w-8 p-0"
-                            onClick={() => store.deleteExpense(expense.id)}
-                          >
-                            <span className="sr-only">Delete</span>
-                            &times;
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            {store.expenses.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No expenses recorded</div>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {Object.entries(
+                  store.expenses.reduce((acc, expense) => {
+                    const monthYear = format(parseISO(expense.date), 'MMMM yyyy');
+                    if (!acc[monthYear]) acc[monthYear] = [];
+                    acc[monthYear].push(expense);
+                    return acc;
+                  }, {} as Record<string, typeof store.expenses>)
+                ).map(([month, expenses]) => {
+                  const monthlyTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+                  return (
+                    <AccordionItem key={month} value={month}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex justify-between w-full pr-4">
+                          <span className="font-semibold">{month}</span>
+                          <span className="text-muted-foreground">Total: ₹{monthlyTotal.toLocaleString()}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>DATE</TableHead>
+                              <TableHead>CATEGORY</TableHead>
+                              <TableHead>DETAILS</TableHead>
+                              <TableHead>MODE</TableHead>
+                              <TableHead className="text-right">AMOUNT</TableHead>
+                              <TableHead className="text-right">ACTIONS</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {expenses.map((expense) => (
+                              <TableRow key={expense.id}>
+                                <TableCell>{format(parseISO(expense.date), 'dd-MM-yyyy')}</TableCell>
+                                <TableCell>{expense.category}</TableCell>
+                                <TableCell>{expense.description}</TableCell>
+                                <TableCell>{expense.mode}</TableCell>
+                                <TableCell className="text-right font-medium">₹{expense.amount.toLocaleString()}</TableCell>
+                                <TableCell className="text-right flex justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => openEditDialog(expense)}
+                                  >
+                                    <span className="sr-only">Edit</span>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive h-8 w-8 p-0"
+                                      onClick={() => store.deleteExpense(expense.id)}
+                                    >
+                                      <span className="sr-only">Delete</span>
+                                      &times;
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            )}
           </CardContent>
         </Card>
 
