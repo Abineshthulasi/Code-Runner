@@ -394,6 +394,7 @@ export default function Orders() {
                           <TableHead>CLIENT</TableHead>
                           <TableHead>ITEMS</TableHead>
                           <TableHead>WORK STATUS</TableHead>
+                          <TableHead>DELIVERY STATUS</TableHead>
                           <TableHead>PAYMENT</TableHead>
                           <TableHead className="text-right">TOTAL</TableHead>
                           <TableHead className="text-right">BALANCE</TableHead>
@@ -437,6 +438,15 @@ export default function Orders() {
                                       order.workStatus === 'Cancelled' ? 'bg-red-100 text-red-700' :
                                         'bg-yellow-100 text-yellow-700'}`}>
                                   {order.workStatus}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                      ${order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                    order.deliveryStatus === 'Out for Delivery' ? 'bg-blue-100 text-blue-700' :
+                                      order.deliveryStatus === 'Returned' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'}`}>
+                                  {order.deliveryStatus}
                                 </span>
                               </TableCell>
                               <TableCell>
