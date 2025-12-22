@@ -8,7 +8,8 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
+  TableFooter
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -642,11 +643,18 @@ export default function Orders() {
                             />
                           </div>
                           <div className="col-span-3">
-                            <Label className="text-xs">Price</Label>
                             <Input
                               type="number"
                               value={item.price}
                               onChange={(e) => updateEditedItem(idx, 'price', Number(e.target.value))}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <Label className="text-xs">Discount</Label>
+                            <Input
+                              type="number"
+                              value={item.discount || 0}
+                              onChange={(e) => updateEditedItem(idx, 'discount', Number(e.target.value))}
                             />
                           </div>
                           <div className="col-span-2">
@@ -664,9 +672,17 @@ export default function Orders() {
                     // View Mode
                     <div className="divide-y">
                       {selectedOrder.items.map((item, i) => (
-                        <div key={i} className="flex justify-between py-2">
-                          <span>{item.description} <span className="text-muted-foreground">x{item.quantity}</span></span>
-                          <span className="font-medium">₹{item.price * item.quantity}</span>
+                        <div key={i} className="flex justify-between py-2 border-b last:border-0 border-dashed">
+                          <div className="flex flex-col">
+                            <span>{item.description} <span className="text-muted-foreground">x{item.quantity}</span></span>
+                            {item.discount ? (
+                              <span className="text-xs text-red-500">Discount: -₹{item.discount}</span>
+                            ) : null}
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">₹{(item.price * item.quantity) - (item.discount || 0)}</div>
+                            {item.discount && <div className="text-xs text-muted-foreground line-through">₹{item.price * item.quantity}</div>}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -686,60 +702,109 @@ export default function Orders() {
                 <h3 className="font-semibold">Payments</h3>
 
                 {/* Payment History List with Edit/Delete */}
-                {selectedOrder.paymentHistory.length > 0 && (
-                  <div className="border rounded-md divide-y">
-                    {selectedOrder.paymentHistory.map((payment) => (
-                      <div key={payment.id} className="p-3 flex items-center justify-between">
-                        {editingPaymentId === payment.id ? (
-                          // Editing Payment Row
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
-                            <Input
-                              type="date"
-                              value={editedPaymentData.date}
-                              onChange={(e) => setEditedPaymentData({ ...editedPaymentData, date: e.target.value })}
-                            />
-                            <Input
-                              type="number"
-                              value={editedPaymentData.amount}
-                              onChange={(e) => setEditedPaymentData({ ...editedPaymentData, amount: e.target.value })}
-                            />
-                            <Select
-                              value={editedPaymentData.mode}
-                              onValueChange={(val) => setEditedPaymentData({ ...editedPaymentData, mode: val })}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="UPI">UPI</SelectItem>
-                                <SelectItem value="Bank">Bank</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <div className="flex gap-1 justify-end">
-                              <Button size="icon" variant="ghost" onClick={() => setEditingPaymentId(null)}><X className="h-4 w-4" /></Button>
-                              <Button size="icon" variant="ghost" className="text-green-600" onClick={handleSavePayment}><Save className="h-4 w-4" /></Button>
-                            </div>
-                          </div>
-                        ) : (
-                          // View Payment Row
-                          <>
-                            <div className="flex flex-col md:flex-row md:gap-6">
-                              <span className="text-muted-foreground w-24">{formatDisplayDate(payment.date)}</span>
-                              <span className="font-medium w-24">₹{payment.amount}</span>
-                              <span className="text-sm px-2 py-0.5 bg-secondary rounded w-fit">{payment.mode}</span>
-                              {payment.note && <span className="text-sm text-muted-foreground italic">"{payment.note}"</span>}
-                            </div>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEditPayment(payment)}>
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeletePayment(payment.id)}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
+                {selectedOrder.paymentHistory.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted">
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Note</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="w-[80px]"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedOrder.paymentHistory.map((payment) => (
+                          <TableRow key={payment.id}>
+                            {editingPaymentId === payment.id ? (
+                              <>
+                                <TableCell>
+                                  <Input
+                                    type="date"
+                                    value={editedPaymentData.date}
+                                    onChange={(e) => setEditedPaymentData({ ...editedPaymentData, date: e.target.value })}
+                                    className="h-8"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={editedPaymentData.mode}
+                                    onValueChange={(val) => setEditedPaymentData({ ...editedPaymentData, mode: val })}
+                                  >
+                                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Cash">Cash</SelectItem>
+                                      <SelectItem value="UPI">UPI</SelectItem>
+                                      <SelectItem value="Bank">Bank</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    value={editedPaymentData.note || ''}
+                                    onChange={(e) => setEditedPaymentData({ ...editedPaymentData, note: e.target.value })}
+                                    placeholder="Note"
+                                    className="h-8"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    value={editedPaymentData.amount}
+                                    onChange={(e) => setEditedPaymentData({ ...editedPaymentData, amount: e.target.value })}
+                                    className="h-8 text-right"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex gap-1 justify-end">
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSavePayment}><Save className="h-4 w-4" /></Button>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingPaymentId(null)}><X className="h-4 w-4" /></Button>
+                                  </div>
+                                </TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell>{formatDisplayDate(payment.date)}</TableCell>
+                                <TableCell>{payment.mode}</TableCell>
+                                <TableCell className="text-muted-foreground italic text-sm">{payment.note || '-'}</TableCell>
+                                <TableCell className="text-right font-medium">₹{payment.amount}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-1 justify-end">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEditPayment(payment)}>
+                                      <Edit2 className="h-3 w-3" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeletePayment(payment.id)}>
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-right font-semibold">Total Paid</TableCell>
+                          <TableCell className="text-right font-bold text-green-600">
+                            ₹{selectedOrder.paymentHistory.reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-right font-semibold">Balance Due</TableCell>
+                          <TableCell className="text-right font-bold text-red-600">
+                            ₹{selectedOrder.balanceAmount.toLocaleString()}
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 text-muted-foreground border rounded-md border-dashed">
+                    No payments recorded yet.
                   </div>
                 )}
 
