@@ -118,6 +118,20 @@ export default function Orders() {
     }
   };
 
+  const handleUpdateClientName = (name: string) => {
+    if (selectedOrder) {
+      setPendingUpdates((prev: any) => ({ ...prev, clientName: name }));
+      setSelectedOrder({ ...selectedOrder, ...pendingUpdates, clientName: name });
+    }
+  };
+
+  const handleUpdatePhone = (phone: string) => {
+    if (selectedOrder) {
+      setPendingUpdates((prev: any) => ({ ...prev, phone: phone }));
+      setSelectedOrder({ ...selectedOrder, ...pendingUpdates, phone: phone });
+    }
+  };
+
 
   const handleSaveChanges = async () => {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
@@ -561,8 +575,18 @@ export default function Orders() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                   <Label>Client Details</Label>
-                  <div className="mt-1 font-medium text-lg">{selectedOrder.clientName}</div>
-                  <div className="text-muted-foreground">{selectedOrder.phone}</div>
+                  <div className="space-y-2 mt-1">
+                    <Input
+                      value={selectedOrder.clientName}
+                      onChange={(e) => handleUpdateClientName(e.target.value)}
+                      placeholder="Client Name"
+                    />
+                    <Input
+                      value={selectedOrder.phone}
+                      onChange={(e) => handleUpdatePhone(e.target.value)}
+                      placeholder="Phone Number"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label className="flex items-center gap-2">
