@@ -396,6 +396,9 @@ export default function Orders() {
                 Download All
               </Button>
             </div>
+            <div className="text-sm font-medium text-muted-foreground hidden md:block">
+              Total: <span className="text-foreground">₹{store.orders.reduce((sum, o) => sum + Number(o.totalAmount), 0).toLocaleString()}</span>
+            </div>
           </CardHeader>
           <CardContent>
             {Object.keys(groupedOrders).length === 0 ? (
