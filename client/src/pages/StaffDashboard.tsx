@@ -30,7 +30,10 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         .slice(0, 10);
 
     // 3. Delivered List
-    const deliveredOrders = store.orders.filter((o) => o.deliveryStatus === "Delivered");
+    const deliveredOrders = store.orders
+        .filter((o) => o.deliveryStatus === "Delivered")
+        .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())
+        .slice(0, 10);
 
     // 4. Current Day Need to Delivery (Due Today)
     const dueTodayOrders = store.orders.filter((o) => {
