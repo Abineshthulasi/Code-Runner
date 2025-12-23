@@ -44,6 +44,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         return isBefore(dueDate, today) && o.deliveryStatus !== 'Delivered' && o.workStatus !== 'Cancelled';
     });
 
+    // 6. Pending Delivery List (Ready but not Delivered)
+    const readyForDeliveryOrders = store.orders.filter(
+        (o) => o.workStatus === 'Ready' && o.deliveryStatus !== 'Delivered'
+    );
+
     const OrderTable = ({ orders, title, emptyMsg, showDateType = 'due' }: { orders: any[], title: string, emptyMsg: string, showDateType?: 'due' | 'order' | 'updated' }) => (
         <Card className="mt-6">
             <CardHeader>
@@ -152,6 +157,8 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
             <OrderTable orders={dueTodayOrders} title="🚨 Need to Delivery Today" emptyMsg="No deliveries scheduled for today." />
 
             <OrderTable orders={outstandingOrders} title="⚠️ Outstanding Deliveries" emptyMsg="No overdue orders." />
+
+            <OrderTable orders={readyForDeliveryOrders} title="📦 Pending Delivery (Ready)" emptyMsg="No orders waiting for delivery." />
 
             <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
 
