@@ -373,6 +373,8 @@ export default function Orders() {
               // Calculate month statistics
               const totalValue = monthOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
               const ordersCount = monthOrders.length;
+              // Pending = Work Status is Pending or In Progress
+              const pendingCount = monthOrders.filter(o => o.workStatus === 'Pending' || o.workStatus === 'In Progress').length;
 
               return (
                 <AccordionItem key={month} value={month}>
@@ -380,7 +382,10 @@ export default function Orders() {
                     <div className="flex justify-between w-full pr-4">
                       <span className="font-semibold">{month}</span>
                       <div className="flex gap-4 text-sm font-normal text-muted-foreground">
-                        <span>{ordersCount} Orders</span>
+                        <span>
+                          {ordersCount} Orders
+                          {pendingCount > 0 && <span className="text-yellow-600 font-medium ml-1">({pendingCount} Pending)</span>}
+                        </span>
                         <span className="text-primary font-medium">Total: ₹{totalValue.toLocaleString()}</span>
                       </div>
                     </div>
