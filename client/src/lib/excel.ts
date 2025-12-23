@@ -78,3 +78,30 @@ export const exportExpensesToExcel = (expenses: Expense[], filename: string) => 
 
     XLSX.writeFile(workbook, `${filename}.xlsx`);
 };
+
+export const exportTransactionsToExcel = (transactions: any[], filename: string) => {
+    const data = transactions.map(tx => ({
+        'Date': tx.date,
+        'Description': tx.description,
+        'Category': tx.category || 'N/A',
+        'Type': tx.type, // Credit/Debit
+        'Amount': tx.amount,
+        'Mode': tx.mode
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    const wscols = [
+        { wch: 15 }, // Date
+        { wch: 40 }, // Description
+        { wch: 20 }, // Category
+        { wch: 10 }, // Type
+        { wch: 15 }, // Amount
+        { wch: 10 }  // Mode
+    ];
+    worksheet['!cols'] = wscols;
+
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+};

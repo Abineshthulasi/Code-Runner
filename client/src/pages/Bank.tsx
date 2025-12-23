@@ -29,6 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Minus, Building2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { exportTransactionsToExcel } from "@/lib/excel";
+import { Download } from "lucide-react";
 
 export default function Bank() {
   const store = useStore();
@@ -203,8 +205,16 @@ export default function Bank() {
 
         {/* Transaction History */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Transaction History</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportTransactionsToExcel(store.transactions, 'All_Transactions')}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download All
+            </Button>
           </CardHeader>
           <CardContent>
             <TransactionTable transactions={store.transactions} onDelete={(id, type, amount, mode) => store.deleteTransaction(id, type, amount, mode)} onEdit={(id, updates) => store.updateTransaction(id, updates)} />
@@ -293,8 +303,23 @@ function TransactionTable({ transactions, onDelete, onEdit }: {
           return (
             <AccordionItem key={month} value={month}>
               <AccordionTrigger className="hover:no-underline">
-                <div className="flex justify-between w-full pr-4">
-                  <span className="font-semibold">{month}</span>
+                <div className="flex justify-between w-full pr-4 items-center">
+                  <div className="flex items-center gap-4">
+                    <span className="font-semibold">{month}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportTransactionsToExcel(monthTxs, `Transactions_${month}`);
+                      }}
+                      title="Download Monthly Excel"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Excel</span>
+                    </Button>
+                  </div>
                   <div className="flex gap-4 text-sm font-normal text-muted-foreground">
                     <span className="text-green-600">In: ₹{depositTotal.toLocaleString()}</span>
                     <span className="text-red-600">Out: ₹{withdrawTotal.toLocaleString()}</span>
