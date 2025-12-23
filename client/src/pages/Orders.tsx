@@ -366,6 +366,13 @@ export default function Orders() {
             <p className="text-muted-foreground">Manage order status and payments</p>
           </div>
           <div className="flex w-full md:w-auto gap-4">
+            <Button
+              variant="outline"
+              onClick={() => exportOrdersToExcel(store.orders, 'All_Orders')}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download All
+            </Button>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

@@ -109,9 +109,18 @@ export default function Expenses() {
   return (
     <Layout>
       <div className="space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Expenses</h2>
-          <p className="text-muted-foreground">Track your business spending.</p>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Expenses</h2>
+            <p className="text-muted-foreground">Track your business spending.</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => exportExpensesToExcel(store.expenses, 'All_Expenses')}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download All
+          </Button>
         </div>
 
         {/* Log New Expense Card */}
