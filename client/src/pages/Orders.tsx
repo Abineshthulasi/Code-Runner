@@ -39,6 +39,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, parseISO } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { exportOrdersToExcel } from "@/lib/excel";
+import { Download } from "lucide-react";
 
 export default function Orders() {
   const store = useStore();
@@ -376,12 +378,30 @@ export default function Orders() {
               // Pending = Work Status is Pending or In Progress
               const pendingCount = monthOrders.filter(o => o.workStatus === 'Pending' || o.workStatus === 'In Progress').length;
 
+              const handleExport = (e: React.MouseEvent) => {
+                e.stopPropagation(); // Prevent accordion toggle
+                exportOrdersToExcel(monthOrders, `Orders_${month}`);
+              };
+
               return (
                 <AccordionItem key={month} value={month}>
                   <AccordionTrigger className="hover:no-underline">
-                    <div className="flex justify-between w-full pr-4">
-                      <span className="font-semibold">{month}</span>
-                      <div className="flex gap-4 text-sm font-normal text-muted-foreground">
+                    <div className="flex justify-between w-full pr-4 items-center">
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold">{month}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={handleExport}
+                          title="Download Excel"
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Excel</span>
+                        </Button>
+                      </div>
+
+                      <div className="flex gap-4 text-sm font-normal text-muted-foreground items-center">
                         <span>
                           {ordersCount} Orders
                           {pendingCount > 0 && <span className="text-yellow-600 font-medium ml-1">({pendingCount} Pending)</span>}

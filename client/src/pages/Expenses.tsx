@@ -37,6 +37,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { format, parseISO } from "date-fns";
+import { exportExpensesToExcel } from "@/lib/excel";
+import { Download } from "lucide-react";
 
 export default function Expenses() {
   const store = useStore();
@@ -231,8 +233,23 @@ export default function Expenses() {
                     return (
                       <AccordionItem key={month} value={month}>
                         <AccordionTrigger className="hover:no-underline">
-                          <div className="flex justify-between w-full pr-4">
-                            <span className="font-semibold">{month}</span>
+                          <div className="flex justify-between w-full pr-4 items-center">
+                            <div className="flex items-center gap-4">
+                              <span className="font-semibold">{month}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportExpensesToExcel(expenses, `Expenses_${month}`);
+                                }}
+                                title="Download Excel"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                <span className="text-xs">Excel</span>
+                              </Button>
+                            </div>
                             <span className="text-muted-foreground">Total: ₹{monthlyTotal.toLocaleString()}</span>
                           </div>
                         </AccordionTrigger>
