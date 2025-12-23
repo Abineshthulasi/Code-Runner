@@ -200,11 +200,8 @@ export default function Expenses() {
         {/* History Table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Expense History</CardTitle>
             <div className="flex items-center gap-4">
-              <div className="text-sm font-medium text-muted-foreground hidden md:block">
-                Total: <span className="text-foreground">₹{store.getTotalExpenses()}</span>
-              </div>
+              <CardTitle>Expense History</CardTitle>
               <Button
                 variant="outline"
                 size="sm"
@@ -213,6 +210,9 @@ export default function Expenses() {
                 <Download className="mr-2 h-4 w-4" />
                 Download All
               </Button>
+            </div>
+            <div className="text-sm font-medium text-muted-foreground hidden md:block">
+              Total: <span className="text-foreground">₹{store.getTotalExpenses()}</span>
             </div>
           </CardHeader>
           <CardContent>
