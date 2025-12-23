@@ -109,18 +109,9 @@ export default function Expenses() {
   return (
     <Layout>
       <div className="space-y-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Expenses</h2>
-            <p className="text-muted-foreground">Track your business spending.</p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => exportExpensesToExcel(store.expenses, 'All_Expenses')}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download All
-          </Button>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Expenses</h2>
+          <p className="text-muted-foreground">Track your business spending.</p>
         </div>
 
         {/* Log New Expense Card */}
@@ -210,8 +201,18 @@ export default function Expenses() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Expense History</CardTitle>
-            <div className="text-sm font-medium text-muted-foreground">
-              Total: <span className="text-foreground">₹{store.getTotalExpenses()}</span>
+            <div className="flex items-center gap-4">
+              <div className="text-sm font-medium text-muted-foreground hidden md:block">
+                Total: <span className="text-foreground">₹{store.getTotalExpenses()}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportExpensesToExcel(store.expenses, 'All_Expenses')}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download All
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
