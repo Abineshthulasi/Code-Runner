@@ -43,7 +43,10 @@ import { exportOrdersToExcel } from "@/lib/excel";
 import { Download } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+import { useLocation } from "wouter";
+
 export default function Orders() {
+  const [, setLocation] = useLocation();
   const store = useStore();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -377,7 +380,7 @@ export default function Orders() {
                 className="pl-8"
               />
             </div>
-            <Button>
+            <Button onClick={() => setLocation("/billing")}>
               <Plus className="mr-2 h-4 w-4" /> New Order
             </Button>
           </div>
