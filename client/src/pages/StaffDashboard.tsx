@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format, isSameDay, parseISO, isBefore, startOfDay } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
 
 export function StaffDashboard({ disableLayout = false }: { disableLayout?: boolean }) {
     const store = useStore();
@@ -52,6 +55,14 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         (o) => o.workStatus === 'Ready' && o.deliveryStatus !== 'Delivered'
     );
 
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleRowClick = (order: any) => {
+        setSelectedOrder(order);
+        setIsDialogOpen(true);
+    };
+
     const OrderTable = ({ orders, title, emptyMsg, showDateType = 'due' }: { orders: any[], title: string, emptyMsg: string, showDateType?: 'due' | 'order' | 'updated' }) => (
         <Card className="mt-6">
             <CardHeader>
@@ -77,7 +88,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                 </TableRow>
                             ) : (
                                 orders.map((order) => (
-                                    <TableRow key={order.id}>
+                                    <TableRow
+                                        key={order.id}
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={() => handleRowClick(order)}
+                                    >
                                         <TableCell className="font-mono font-medium">{order.orderNumber}</TableCell>
                                         <TableCell>
                                             <div>{order.clientName}</div>
@@ -172,11 +187,121 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         </div>
     );
 
-    if (disableLayout) return content;
+    const OrderDetailsDialog = () => (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                {selectedOrder && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl">Order #{selectedOrder.orderNumber}</DialogTitle>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                            <div>
+                                <h4 className="font-semibold text-sm text-muted-foreground mb-1">Client Details</h4>
+                                <div className="text-lg font-medium">{selectedOrder.clientName}</div>
+                                <div className="text-muted-foreground">{selectedOrder.phone || "No phone"}</div>
+                            </div>
+                            <div className="text-right">
+                                <h4 className="font-semibold text-sm text-muted-foreground mb-1">Dates</h4>
+                                <div><span className="font-medium">Ordered:</span> {format(parseISO(selectedOrder.orderDate), 'dd-MM-yyyy')}</div>
+                                {selectedOrder.dueDate && <div><span className="font-medium">Due:</span> {format(parseISO(selectedOrder.dueDate), 'dd-MM-yyyy')}</div>}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground font-semibold uppercase">Work Status</span>
+                                <Badge variant="outline" className={`mt-1 w-fit ${selectedOrder.workStatus === 'Ready' ? 'bg-green-100 text-green-800' :
+                                        selectedOrder.workStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''
+                                    }`}>
+                                    {selectedOrder.workStatus}
+                                </Badge>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground font-semibold uppercase">Delivery</span>
+                                <Badge variant="outline" className={`mt-1 w-fit ${selectedOrder.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-800' : ''
+                                    }`}>
+                                    {selectedOrder.deliveryStatus}
+                                </Badge>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground font-semibold uppercase">Payment</span>
+                                <Badge variant="outline" className={`mt-1 w-fit ${selectedOrder.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' :
+                                        selectedOrder.paymentStatus === 'Partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                                    }`}>
+                                    {selectedOrder.paymentStatus}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        <div className="py-4">
+                            <h4 className="font-semibold mb-3">Item Details</h4>
+                            <div className="border rounded-md divide-y">
+                                {selectedOrder.items.map((item: any, i: number) => (
+                                    <div key={i} className="flex justify-between p-3 text-sm">
+                                        <div>
+                                            <span className="font-medium">{item.description}</span>
+                                            <span className="text-muted-foreground ml-2">x{item.quantity}</span>
+                                        </div>
+                                        <div className="font-medium">₹{(item.price * item.quantity) - (item.discount || 0)}</div>
+                                    </div>
+                                ))}
+                                <div className="flex justify-between p-3 bg-muted/50 font-bold">
+                                    <span>Total Amount</span>
+                                    <span>₹{Number(selectedOrder.totalAmount).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="py-2">
+                            <h4 className="font-semibold mb-3">Payment History</h4>
+                            {selectedOrder.paymentHistory.length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic">No payments recorded.</p>
+                            ) : (
+                                <div className="border rounded-md divide-y">
+                                    {selectedOrder.paymentHistory.map((p: any, i: number) => (
+                                        <div key={i} className="flex justify-between p-3 text-sm items-center">
+                                            <div className="flex gap-3">
+                                                <span className="text-muted-foreground">{format(parseISO(p.date), 'dd-MM-yyyy')}</span>
+                                                <Badge variant="secondary" className="text-xs h-5">{p.mode}</Badge>
+                                            </div>
+                                            <span className="font-medium">₹{p.amount}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t mt-2">
+                            <div className="text-sm text-muted-foreground">
+                                {selectedOrder.notes && (
+                                    <>
+                                        <span className="font-semibold text-foreground">Note:</span> {selectedOrder.notes}
+                                    </>
+                                )}
+                            </div>
+                            <div className="text-xl font-bold">
+                                <span className="text-muted-foreground text-sm font-normal mr-2">Balance Due:</span>
+                                <span className={Number(selectedOrder.balanceAmount) > 0 ? "text-red-600" : "text-green-600"}>
+                                    ₹{Number(selectedOrder.balanceAmount).toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+
+    if (disableLayout) return <>{content}<OrderDetailsDialog /></>;
 
     return (
         <Layout>
             {content}
+            <OrderDetailsDialog />
         </Layout>
     );
 }
