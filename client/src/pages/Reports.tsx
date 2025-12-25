@@ -455,7 +455,7 @@ export default function Reports() {
                 </TableHeader>
                 <TableBody>
                   {monthlyReport.map((data) => {
-                    const netProfit = data.sales - data.expenses;
+                    const netProfit = data.totalSales - data.expenses;
                     const hasData = data.sales > 0 || data.expenses > 0;
 
                     return (
@@ -489,8 +489,8 @@ export default function Reports() {
                     <TableCell className="text-right text-blue-600">₹{yearTotals.prevMonthRecovery.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-red-600">₹{yearTotals.expenses.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-amber-600">₹{yearTotals.pending.toLocaleString()}</TableCell>
-                    <TableCell className={`text-right ${yearTotals.sales - yearTotals.expenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {yearTotals.sales - yearTotals.expenses >= 0 ? '+' : ''}₹{(yearTotals.sales - yearTotals.expenses).toLocaleString()}
+                    <TableCell className={`text-right ${yearTotals.totalSales - yearTotals.expenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {yearTotals.totalSales - yearTotals.expenses >= 0 ? '+' : ''}₹{(yearTotals.totalSales - yearTotals.expenses).toLocaleString()}
                     </TableCell>
                   </TableRow>
                 </TableBody>
