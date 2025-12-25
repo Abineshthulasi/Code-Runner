@@ -20,7 +20,6 @@ export const orders = pgTable("orders", {
   balanceAmount: decimal("balance_amount", { precision: 10, scale: 2 }).notNull(),
   workStatus: varchar("work_status", { length: 20 }).notNull().default('Pending'),
   deliveryStatus: varchar("delivery_status", { length: 30 }).notNull().default('Pending'),
-  deliveryDate: varchar("delivery_date", { length: 20 }),
   paymentStatus: varchar("payment_status", { length: 20 }).notNull().default('Unpaid'),
   paymentHistory: jsonb("payment_history").notNull().$type<Array<{
     id: string;
