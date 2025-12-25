@@ -103,13 +103,13 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                                 <span className="font-medium">
                                                     {showDateType === 'order' ? format(parseISO(order.orderDate), 'dd-MM-yyyy') :
                                                         showDateType === 'updated' ? format(new Date(order.updatedAt || order.createdAt), 'dd-MM-yyyy') :
-                                                            order.deliveryDate ? format(parseISO(order.deliveryDate), 'dd-MM-yyyy') :
+                                                            order.deliveryStatus === 'Delivered' && order.deliveryDate ? format(parseISO(order.deliveryDate), 'dd-MM-yyyy') :
                                                                 order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : '-'}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground uppercase">
                                                     {showDateType === 'order' ? 'Ordered' :
                                                         showDateType === 'updated' ? 'Updated' :
-                                                            order.deliveryDate ? 'Delivery' :
+                                                            order.deliveryStatus === 'Delivered' ? 'Delivered' :
                                                                 order.dueDate ? 'Due' : ''}
                                                 </span>
                                             </div>
@@ -208,8 +208,8 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                             <div className="text-right">
                                 <h4 className="font-semibold text-sm text-muted-foreground mb-1">Dates</h4>
                                 <div><span className="font-medium">Ordered:</span> {format(parseISO(selectedOrder.orderDate), 'dd-MM-yyyy')}</div>
-                                {selectedOrder.deliveryDate ? (
-                                    <div className="text-blue-600"><span className="font-medium">Delivery:</span> {format(parseISO(selectedOrder.deliveryDate), 'dd-MM-yyyy')}</div>
+                                {selectedOrder.deliveryStatus === 'Delivered' && selectedOrder.deliveryDate ? (
+                                    <div className="text-green-600"><span className="font-medium">Delivered:</span> {format(parseISO(selectedOrder.deliveryDate), 'dd-MM-yyyy')}</div>
                                 ) : (
                                     selectedOrder.dueDate && <div><span className="font-medium">Due:</span> {format(parseISO(selectedOrder.dueDate), 'dd-MM-yyyy')}</div>
                                 )}

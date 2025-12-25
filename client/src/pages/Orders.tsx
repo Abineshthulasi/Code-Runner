@@ -820,10 +820,11 @@ export default function Orders() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Delivery Date</Label>
+                  <Label htmlFor="edit-delivery-date">Delivered Date</Label>
                   <Input
+                    id="edit-delivery-date"
                     type="date"
-                    value={selectedOrder.deliveryDate ? selectedOrder.deliveryDate.split('T')[0] : ''}
+                    value={selectedOrder.deliveryDate || ''}
                     onChange={(e) => handleUpdateDeliveryDate(e.target.value)}
                   />
                 </div>
