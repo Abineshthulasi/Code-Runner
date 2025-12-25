@@ -149,6 +149,13 @@ export default function Orders() {
     }
   };
 
+  const handleUpdateDueDate = (date: string) => {
+    if (selectedOrder) {
+      setPendingUpdates((prev: any) => ({ ...prev, dueDate: date }));
+      setSelectedOrder({ ...selectedOrder, ...pendingUpdates, dueDate: date });
+    }
+  };
+
 
   const handleSaveChanges = async () => {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
@@ -771,8 +778,19 @@ export default function Orders() {
                       type="date"
                       value={selectedOrder.orderDate ? selectedOrder.orderDate.split('T')[0] : ''}
                       onChange={(e) => handleUpdateOrderDate(e.target.value)}
-                      className="w-[160px]"
                     />
+                  </div>
+                  <div className="mt-4">
+                    <Label className="flex items-center gap-2">
+                      Due Date
+                    </Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="date"
+                        value={selectedOrder.dueDate ? selectedOrder.dueDate.split('T')[0] : ''}
+                        onChange={(e) => handleUpdateDueDate(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div>
