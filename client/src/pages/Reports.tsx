@@ -322,6 +322,15 @@ export default function Reports() {
       .reduce((sum, o) => sum + Number(o.balanceAmount), 0);
   }, [store.orders, selectedYear]);
 
+  // Calculate Today's Payment
+  const todaysPayment = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return store.orders.reduce((sum, order) => {
+      const orderPayments = order.paymentHistory.filter(p => p.date === today);
+      return sum + orderPayments.reduce((pSum, p) => pSum + Number(p.amount), 0);
+    }, 0);
+  }, [store.orders]);
+
   // Balance Adjustment Logic
   const [adjustingData, setAdjustingData] = useState<{
     monthIndex: number;
@@ -383,6 +392,16 @@ export default function Reports() {
 
         {/* Year Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Payment</CardTitle>
+              <IndianRupee className="h-4 w-4 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-600">₹{todaysPayment.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Sales ({selectedYear})</CardTitle>
