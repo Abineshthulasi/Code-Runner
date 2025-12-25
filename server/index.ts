@@ -60,6 +60,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Auto-migration to ensure delivery_date column exists
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      ALTER TABLE orders 
+      ADD COLUMN IF NOT EXISTS delivery_date VARCHAR(20);
+    `);
+    console.log("Migration check: Verified delivery_date column exists.");
+  } catch (err) {
+    console.error("Migration check failed:", err);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
