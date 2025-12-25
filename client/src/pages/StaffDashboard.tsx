@@ -104,12 +104,13 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                                     {showDateType === 'order' ? format(parseISO(order.orderDate), 'dd-MM-yyyy') :
                                                         showDateType === 'updated' ? format(new Date(order.updatedAt || order.createdAt), 'dd-MM-yyyy') :
                                                             order.deliveryDate ? format(parseISO(order.deliveryDate), 'dd-MM-yyyy') :
-                                                                order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : 'N/A'}
+                                                                order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : '-'}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground uppercase">
                                                     {showDateType === 'order' ? 'Ordered' :
                                                         showDateType === 'updated' ? 'Updated' :
-                                                            order.deliveryDate ? 'Delivery' : 'Due'}
+                                                            order.deliveryDate ? 'Delivery' :
+                                                                order.dueDate ? 'Due' : ''}
                                                 </span>
                                             </div>
                                         </TableCell>
