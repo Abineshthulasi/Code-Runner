@@ -209,7 +209,7 @@ export default function Orders() {
       setPaymentAmount("");
       setPaymentDate(new Date().toISOString().split('T')[0]);
       setPaymentNote("");
-      toast({ title: "Payment Added (Unsaved)", description: "Click 'Save Changes' to confirm." });
+
     }
   };
 
