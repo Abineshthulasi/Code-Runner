@@ -694,7 +694,12 @@ export default function Orders() {
           }
         }}>
           {selectedOrder && (
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent
+              className="max-w-4xl max-h-[90vh] overflow-y-auto"
+              onInteractOutside={(e) => {
+                e.preventDefault();
+              }}
+            >
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between">
                   <span>Order #{selectedOrder.orderNumber}</span>
