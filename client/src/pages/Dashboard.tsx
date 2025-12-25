@@ -100,7 +100,8 @@ export default function Dashboard() {
   };
 
   const pendingOrders = store.getPendingOrdersCount();
-  const totalSales = store.getTotalSales();
+  // Calculate Total Order Worth (excluding cancelled)
+  const totalOrderWorth = store.orders.reduce((sum, order) => order.workStatus !== 'Cancelled' ? sum + order.totalAmount : sum, 0);
   const totalExpenses = store.getTotalExpenses();
 
   return (
@@ -149,7 +150,6 @@ export default function Dashboard() {
             {/* Stats Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Bank Balance</CardTitle>
                   <div className="flex gap-2">
@@ -169,12 +169,34 @@ export default function Dashboard() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="flex items-center justify-between w-full">
+                    <CardTitle className="text-sm font-medium">Cash In Hand</CardTitle>
+                    <div className="flex gap-2">
+                      {user?.role === 'admin' && (
+                        <Button variant="ghost" size="icon" className="h-4 w-4" onClick={handleEditBalanceOpen}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                      <IndianRupee className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ₹{store.cashInHand.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Physical cash available</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹{totalSales.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Collected payments</p>
+                  <div className="text-2xl font-bold">₹{totalOrderWorth.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Total Order Worth</p>
                 </CardContent>
               </Card>
 
@@ -200,28 +222,6 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-amber-600 mt-2">
                     Pending: ₹{store.getPendingSalesAmount().toLocaleString()}
                   </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="md:col-span-1 lg:col-span-1 border-dashed bg-sidebar/50">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">Cash In Hand</CardTitle>
-                    {user?.role === 'admin' && (
-                      <Button variant="ghost" size="icon" className="h-4 w-4 -mr-2" onClick={handleEditBalanceOpen}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold flex items-center gap-2">
-                    <IndianRupee className="w-5 h-5 text-muted-foreground" />
-                    {store.cashInHand.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Physical cash available</p>
                 </CardContent>
               </Card>
             </div>
