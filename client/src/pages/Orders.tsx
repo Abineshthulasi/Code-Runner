@@ -112,6 +112,14 @@ export default function Orders() {
       setSelectedOrder({ ...selectedOrder, ...pendingUpdates, workStatus: status as any });
     }
   };
+
+  const handleUpdateDeliveryDate = (date: string) => {
+    if (selectedOrder) {
+      setPendingUpdates((prev: any) => ({ ...prev, deliveryDate: date }));
+      setSelectedOrder({ ...selectedOrder, ...pendingUpdates, deliveryDate: date });
+    }
+  };
+
   const handleUpdateDeliveryStatus = (status: string) => {
     if (selectedOrder) {
       setPendingUpdates((prev: any) => ({ ...prev, deliveryStatus: status }));
@@ -776,7 +784,7 @@ export default function Orders() {
               </div>
 
               {/* Status Section */}
-              <div className="grid grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-muted/30 rounded-lg">
                 <div className="space-y-2">
                   <Label>Work Status</Label>
                   <Select
@@ -810,6 +818,14 @@ export default function Orders() {
                       <SelectItem value="Returned">Returned</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Delivery Date</Label>
+                  <Input
+                    type="date"
+                    value={selectedOrder.deliveryDate ? selectedOrder.deliveryDate.split('T')[0] : ''}
+                    onChange={(e) => handleUpdateDeliveryDate(e.target.value)}
+                  />
                 </div>
               </div>
 

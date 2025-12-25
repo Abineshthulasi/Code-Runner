@@ -31,6 +31,7 @@ export interface Order {
   orderDate: string;
   dueDate: string;
   notes?: string;
+  deliveryDate?: string;
   createdAt: string;
 }
 

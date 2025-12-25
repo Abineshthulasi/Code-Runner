@@ -40,6 +40,7 @@ export interface Order {
   dueDate: string;
   createdAt: string;
   updatedAt?: string;
+  deliveryDate?: string;
   notes?: string;
 }
 
