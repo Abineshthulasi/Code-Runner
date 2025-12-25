@@ -184,7 +184,7 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
 
             <OrderTable orders={recentOrders} title="📝 Recently Taken Orders" emptyMsg="No recent orders." showDateType="order" />
 
-            <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." showDateType="updated" />
+            <OrderTable orders={deliveredOrders} title="✅ Recently Delivered" emptyMsg="No delivered orders yet." />
 
         </div>
     );
