@@ -141,9 +141,20 @@ export default function Orders() {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
       // Check for new payments to update balances
       if (pendingUpdates.paymentHistory) {
+        // Sanitize IDs: Replace 'temp-' IDs with permanent ones
+        const sanitizedHistory = pendingUpdates.paymentHistory.map((p: any) => {
+          if (p.id.startsWith('temp-')) {
+            return { ...p, id: `pay_${Date.now()}_${Math.floor(Math.random() * 10000)}` };
+          }
+          return p;
+        });
+
         const originalOrder = store.orders.find(o => o.id === selectedOrder.id);
         if (originalOrder) {
-          const newPayments = pendingUpdates.paymentHistory.filter((p: any) =>
+          // Identify NEW payments by checking against original history
+          // New payments (now sanitized) won't be in original history.
+          // We can't match by ID anymore for the new ones, but filtering by !original.find works because original store lacks the new IDs.
+          const newPayments = sanitizedHistory.filter((p: any) =>
             !originalOrder.paymentHistory.find((op: any) => op.id === p.id)
           );
 
@@ -162,6 +173,9 @@ export default function Orders() {
             });
           }
         }
+
+        // Use the sanitized history for the update
+        pendingUpdates.paymentHistory = sanitizedHistory;
       }
 
       await store.updateOrder(selectedOrder.id, pendingUpdates);
