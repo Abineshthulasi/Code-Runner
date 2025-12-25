@@ -32,7 +32,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Trash2, Ban, Printer, Save, X, Edit2, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -63,6 +63,11 @@ export default function Orders() {
   const [isEditingItems, setIsEditingItems] = useState(false);
   const [editedItems, setEditedItems] = useState<{ id: string; description: string; quantity: number; price: number; discount?: number }[]>([]);
   const [isEditingOrderDate, setIsEditingOrderDate] = useState(false);
+
+  // Loading States
+  const [isSavingItems, setIsSavingItems] = useState(false);
+  const [isSavingChanges, setIsSavingChanges] = useState(false);
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
 
   // Payment Editing State
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
@@ -139,49 +144,56 @@ export default function Orders() {
 
   const handleSaveChanges = async () => {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
-      // Check for new payments to update balances
-      if (pendingUpdates.paymentHistory) {
-        // Sanitize IDs: Replace 'temp-' IDs with permanent ones
-        const sanitizedHistory = pendingUpdates.paymentHistory.map((p: any) => {
-          if (p.id.startsWith('temp-')) {
-            return { ...p, id: `pay_${Date.now()}_${Math.floor(Math.random() * 10000)}` };
-          }
-          return p;
-        });
-
-        const originalOrder = store.orders.find(o => o.id === selectedOrder.id);
-        if (originalOrder) {
-          // Identify NEW payments by checking against original history
-          // New payments (now sanitized) won't be in original history.
-          // We can't match by ID anymore for the new ones, but filtering by !original.find works because original store lacks the new IDs.
-          const newPayments = sanitizedHistory.filter((p: any) =>
-            !originalOrder.paymentHistory.find((op: any) => op.id === p.id)
-          );
-
-          let cashDiff = 0;
-          let bankDiff = 0;
-
-          newPayments.forEach((p: any) => {
-            if (p.mode === 'Cash') cashDiff += Number(p.amount);
-            else bankDiff += Number(p.amount);
+      setIsSavingChanges(true);
+      try {
+        // Check for new payments to update balances
+        if (pendingUpdates.paymentHistory) {
+          // Sanitize IDs: Replace 'temp-' IDs with permanent ones
+          const sanitizedHistory = pendingUpdates.paymentHistory.map((p: any) => {
+            if (p.id.startsWith('temp-')) {
+              return { ...p, id: `pay_${Date.now()}_${Math.floor(Math.random() * 10000)}` };
+            }
+            return p;
           });
 
-          if (cashDiff !== 0 || bankDiff !== 0) {
-            await store.updateBalances({
-              bankBalance: (store.bankBalance + bankDiff).toString(),
-              cashInHand: (store.cashInHand + cashDiff).toString()
+          const originalOrder = store.orders.find(o => o.id === selectedOrder.id);
+          if (originalOrder) {
+            // Identify NEW payments by checking against original history
+            // New payments (now sanitized) won't be in original history.
+            // We can't match by ID anymore for the new ones, but filtering by !original.find works because original store lacks the new IDs.
+            const newPayments = sanitizedHistory.filter((p: any) =>
+              !originalOrder.paymentHistory.find((op: any) => op.id === p.id)
+            );
+
+            let cashDiff = 0;
+            let bankDiff = 0;
+
+            newPayments.forEach((p: any) => {
+              if (p.mode === 'Cash') cashDiff += Number(p.amount);
+              else bankDiff += Number(p.amount);
             });
+
+            if (cashDiff !== 0 || bankDiff !== 0) {
+              await store.updateBalances({
+                bankBalance: (store.bankBalance + bankDiff).toString(),
+                cashInHand: (store.cashInHand + cashDiff).toString()
+              });
+            }
           }
+
+          // Use the sanitized history for the update
+          pendingUpdates.paymentHistory = sanitizedHistory;
         }
 
-        // Use the sanitized history for the update
-        pendingUpdates.paymentHistory = sanitizedHistory;
+        await store.updateOrder(selectedOrder.id, pendingUpdates);
+        toast({ title: "Order Changes Saved" });
+        setPendingUpdates({});
+        setIsEditDialogOpen(false);
+      } catch (error) {
+        toast({ title: "Failed to save changes", variant: "destructive" });
+      } finally {
+        setIsSavingChanges(false);
       }
-
-      await store.updateOrder(selectedOrder.id, pendingUpdates);
-      toast({ title: "Order Changes Saved" });
-      setPendingUpdates({});
-      setIsEditDialogOpen(false);
     } else {
       setIsEditDialogOpen(false);
     }
@@ -189,41 +201,45 @@ export default function Orders() {
 
   const handleAddPayment = () => {
     if (selectedOrder && paymentAmount) {
-      // Create new payment object with temp ID
-      const newPayment = {
-        id: `temp-${Date.now()}`,
-        amount: Number(paymentAmount),
-        mode: paymentMode,
-        date: paymentDate,
-        note: paymentNote
-      };
+      setIsAddingPayment(true);
+      // Simulate network request for better UX
+      setTimeout(() => {
+        // Create new payment object with temp ID
+        const newPayment = {
+          id: `temp-${Date.now()}`,
+          amount: Number(paymentAmount),
+          mode: paymentMode,
+          date: paymentDate,
+          note: paymentNote
+        };
 
-      // Calculate new state
-      const updatedHistory = [...selectedOrder.paymentHistory, newPayment];
-      const totalPaid = updatedHistory.reduce((sum, p) => sum + Number(p.amount), 0);
-      const newBalance = selectedOrder.totalAmount - totalPaid;
-      const newPaymentStatus = newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+        // Calculate new state
+        const updatedHistory = [...selectedOrder.paymentHistory, newPayment];
+        const totalPaid = updatedHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+        const newBalance = selectedOrder.totalAmount - totalPaid;
+        const newPaymentStatus = newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
 
-      // Update pending changes
-      setPendingUpdates((prev: any) => ({
-        ...prev,
-        paymentHistory: updatedHistory,
-        balanceAmount: newBalance,
-        paymentStatus: newPaymentStatus as any
-      }));
+        // Update pending changes
+        setPendingUpdates((prev: any) => ({
+          ...prev,
+          paymentHistory: updatedHistory,
+          balanceAmount: newBalance,
+          paymentStatus: newPaymentStatus as any
+        }));
 
-      // Update local UI immediately
-      setSelectedOrder({
-        ...selectedOrder,
-        paymentHistory: updatedHistory as any,
-        balanceAmount: newBalance,
-        paymentStatus: newPaymentStatus as any
-      });
+        // Update local UI immediately
+        setSelectedOrder({
+          ...selectedOrder,
+          paymentHistory: updatedHistory as any,
+          balanceAmount: newBalance,
+          paymentStatus: newPaymentStatus as any
+        });
 
-      setPaymentAmount("");
-      setPaymentDate(new Date().toISOString().split('T')[0]);
-      setPaymentNote("");
-
+        setPaymentAmount("");
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentNote("");
+        setIsAddingPayment(false);
+      }, 500);
     }
   };
 
@@ -257,30 +273,37 @@ export default function Orders() {
   const handleSaveItems = async () => {
     if (!selectedOrder) return;
 
-    const newTotal = editedItems.reduce((sum, item) => sum + ((Number(item.price) * Number(item.quantity)) - (Number(item.discount || 0))), 0);
-    const totalPaid = selectedOrder.totalAmount - selectedOrder.balanceAmount;
-    const newBalance = newTotal - totalPaid;
+    setIsSavingItems(true);
+    try {
+      const newTotal = editedItems.reduce((sum, item) => sum + ((Number(item.price) * Number(item.quantity)) - (Number(item.discount || 0))), 0);
+      const totalPaid = selectedOrder.totalAmount - selectedOrder.balanceAmount;
+      const newBalance = newTotal - totalPaid;
 
-    await store.updateOrder(selectedOrder.id, {
-      items: editedItems,
-      totalAmount: newTotal,
-      balanceAmount: newBalance,
-      // If balance becomes negative (overpaid), we might need to handle that, 
-      // but simple math works for now. 
-      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
-    });
+      await store.updateOrder(selectedOrder.id, {
+        items: editedItems,
+        totalAmount: newTotal,
+        balanceAmount: newBalance,
+        // If balance becomes negative (overpaid), we might need to handle that, 
+        // but simple math works for now. 
+        paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+      });
 
-    // Update the local selectedOrder to reflect changes immediately for the UI
-    setSelectedOrder({
-      ...selectedOrder,
-      items: editedItems,
-      totalAmount: newTotal,
-      balanceAmount: newBalance,
-      paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
-    });
+      // Update the local selectedOrder to reflect changes immediately for the UI
+      setSelectedOrder({
+        ...selectedOrder,
+        items: editedItems,
+        totalAmount: newTotal,
+        balanceAmount: newBalance,
+        paymentStatus: newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid')
+      });
 
-    setIsEditingItems(false);
-    toast({ title: "Order Items Updated" });
+      setIsEditingItems(false);
+      toast({ title: "Order Items Updated" });
+    } catch (error) {
+      toast({ title: "Failed to update items", variant: "destructive" });
+    } finally {
+      setIsSavingItems(false);
+    }
   };
 
   const updateEditedItem = (index: number, field: string, value: any) => {
@@ -801,7 +824,10 @@ export default function Orders() {
                   ) : (
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setIsEditingItems(false)}>Cancel</Button>
-                      <Button size="sm" onClick={handleSaveItems}>Save Items</Button>
+                      <Button size="sm" onClick={handleSaveItems} disabled={isSavingItems}>
+                        {isSavingItems ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        {isSavingItems ? 'Saving...' : 'Save Items'}
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -1028,15 +1054,19 @@ export default function Orders() {
                     value={paymentNote}
                     onChange={(e) => setPaymentNote(e.target.value)}
                   />
-                  <Button className="w-full" onClick={handleAddPayment}>
-                    Add Payment
+                  <Button className="w-full" onClick={handleAddPayment} disabled={!paymentAmount || isAddingPayment}>
+                    {isAddingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isAddingPayment ? 'Adding...' : 'Add Payment'}
                   </Button>
                 </div>
               </div>
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Close</Button>
-                <Button onClick={handleSaveChanges}>Save Changes</Button>
+                <Button onClick={handleSaveChanges} disabled={isSavingChanges}>
+                  {isSavingChanges ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSavingChanges ? 'Saving...' : 'Save Changes'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           )}
