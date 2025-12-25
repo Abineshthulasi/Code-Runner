@@ -139,6 +139,31 @@ export default function Orders() {
 
   const handleSaveChanges = async () => {
     if (selectedOrder && Object.keys(pendingUpdates).length > 0) {
+      // Check for new payments to update balances
+      if (pendingUpdates.paymentHistory) {
+        const originalOrder = store.orders.find(o => o.id === selectedOrder.id);
+        if (originalOrder) {
+          const newPayments = pendingUpdates.paymentHistory.filter((p: any) =>
+            !originalOrder.paymentHistory.find((op: any) => op.id === p.id)
+          );
+
+          let cashDiff = 0;
+          let bankDiff = 0;
+
+          newPayments.forEach((p: any) => {
+            if (p.mode === 'Cash') cashDiff += Number(p.amount);
+            else bankDiff += Number(p.amount);
+          });
+
+          if (cashDiff !== 0 || bankDiff !== 0) {
+            await store.updateBalances({
+              bankBalance: (store.bankBalance + bankDiff).toString(),
+              cashInHand: (store.cashInHand + cashDiff).toString()
+            });
+          }
+        }
+      }
+
       await store.updateOrder(selectedOrder.id, pendingUpdates);
       toast({ title: "Order Changes Saved" });
       setPendingUpdates({});
@@ -150,21 +175,41 @@ export default function Orders() {
 
   const handleAddPayment = () => {
     if (selectedOrder && paymentAmount) {
-      store.addOrderPayment(
-        selectedOrder.id,
-        Number(paymentAmount),
-        paymentMode,
-        paymentDate,
-        paymentNote
-      );
+      // Create new payment object with temp ID
+      const newPayment = {
+        id: `temp-${Date.now()}`,
+        amount: Number(paymentAmount),
+        mode: paymentMode,
+        date: paymentDate,
+        note: paymentNote
+      };
+
+      // Calculate new state
+      const updatedHistory = [...selectedOrder.paymentHistory, newPayment];
+      const totalPaid = updatedHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+      const newBalance = selectedOrder.totalAmount - totalPaid;
+      const newPaymentStatus = newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+
+      // Update pending changes
+      setPendingUpdates((prev: any) => ({
+        ...prev,
+        paymentHistory: updatedHistory,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      }));
+
+      // Update local UI immediately
+      setSelectedOrder({
+        ...selectedOrder,
+        paymentHistory: updatedHistory as any,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      });
+
       setPaymentAmount("");
       setPaymentDate(new Date().toISOString().split('T')[0]);
       setPaymentNote("");
-      toast({ title: "Payment Recorded" });
-      // Close dialog or update local selectedOrder to reflect changes?
-      // Store updates automatically, but selectedOrder is a snapshot.
-      // We need to re-fetch or rely on the dialog closing.
-      setIsEditDialogOpen(false);
+      toast({ title: "Payment Added (Unsaved)", description: "Click 'Save Changes' to confirm." });
     }
   };
 
@@ -246,6 +291,35 @@ export default function Orders() {
   const handleSavePayment = async () => {
     if (!selectedOrder || !editedPaymentData) return;
 
+    // Handle temp (unsaved) payments locally
+    if (editingPaymentId?.startsWith('temp-')) {
+      const newPaymentHistory = selectedOrder.paymentHistory.map(p =>
+        p.id === editingPaymentId ? { ...editedPaymentData, amount: Number(editedPaymentData.amount) } : p
+      );
+
+      const totalPaid = newPaymentHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+      const newBalance = selectedOrder.totalAmount - totalPaid;
+      const newPaymentStatus = newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+
+      setPendingUpdates((prev: any) => ({
+        ...prev,
+        paymentHistory: newPaymentHistory,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      }));
+
+      setSelectedOrder({
+        ...selectedOrder,
+        paymentHistory: newPaymentHistory,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      });
+
+      setEditingPaymentId(null);
+      setEditedPaymentData(null);
+      return;
+    }
+
     // Refresh data to ensure balances are up to date
     await store.loadData();
 
@@ -315,6 +389,31 @@ export default function Orders() {
   const handleDeletePayment = async (paymentId: string) => {
     if (!selectedOrder) return;
     if (!confirm("Are you sure you want to delete this payment?")) return;
+
+    // Handle temp (unsaved) payments locally
+    if (paymentId.startsWith('temp-')) {
+      const newPaymentHistory = selectedOrder.paymentHistory.filter(p => p.id !== paymentId);
+
+      const totalPaid = newPaymentHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+      const newBalance = selectedOrder.totalAmount - totalPaid;
+      const newPaymentStatus = newBalance <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Unpaid');
+
+      setPendingUpdates((prev: any) => ({
+        ...prev,
+        paymentHistory: newPaymentHistory,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      }));
+
+      setSelectedOrder({
+        ...selectedOrder,
+        paymentHistory: newPaymentHistory,
+        balanceAmount: newBalance,
+        paymentStatus: newPaymentStatus as any
+      });
+      toast({ title: "Unsaved Payment Removed" });
+      return;
+    }
 
     // Find payment to reverse balance
     const paymentToDelete = selectedOrder.paymentHistory.find(p => p.id === paymentId);
