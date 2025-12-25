@@ -36,7 +36,7 @@ import {
 
 const orderSchema = z.object({
   clientName: z.string().min(2, "Name required"),
-  phone: z.string().optional(),
+  phone: z.string().max(20, "Phone too long (max 20 chars)").optional(),
   orderDate: z.string().min(1, "Order date required"),
   dueDate: z.string().optional(),
   items: z.array(z.object({
@@ -82,21 +82,30 @@ export default function Billing() {
   const balanceAmount = totalAmount - (Number(form.watch("advanceAmount")) || 0);
 
   const onSubmit = async (data: OrderFormValues) => {
-    const newOrder = await store.addOrder({
-      orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      clientName: data.clientName,
-      phone: data.phone || "",
-      items: data.items.map(i => ({ ...i, id: Math.random().toString() })),
-      totalAmount,
-      initialPayment: data.advanceAmount,
-      initialPaymentMode: data.advanceMode,
-      orderDate: data.orderDate,
-      dueDate: data.dueDate || "",
-      notes: data.notes
-    });
+    try {
+      const newOrder = await store.addOrder({
+        orderNumber: `ORD-${Date.now().toString().slice(-8)}`,
+        clientName: data.clientName,
+        phone: data.phone || "",
+        items: data.items.map(i => ({ ...i, id: Math.random().toString() })),
+        totalAmount,
+        initialPayment: data.advanceAmount,
+        initialPaymentMode: data.advanceMode,
+        orderDate: data.orderDate,
+        dueDate: data.dueDate || "",
+        notes: data.notes
+      });
 
-    setCreatedOrderId(newOrder.id);
-    toast({ title: "Order Created", description: "New order has been successfully generated." });
+      setCreatedOrderId(newOrder.id);
+      toast({ title: "Order Created", description: "New order has been successfully generated." });
+    } catch (error: any) {
+      console.error("Order creation failed:", error);
+      toast({
+        title: "Error Creating Order",
+        description: error.message || "Failed to create order. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleReset = () => {
@@ -313,8 +322,10 @@ export default function Billing() {
                 </div>
 
                 <div className="flex justify-end gap-4 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setLocation("/")}>Cancel</Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/90">Create Order</Button>
+                  <Button type="button" variant="outline" onClick={() => setLocation("/")} disabled={form.formState.isSubmitting}>Cancel</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "Creating..." : "Create Order"}
+                  </Button>
                 </div>
 
               </form>
