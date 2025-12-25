@@ -103,11 +103,13 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                                 <span className="font-medium">
                                                     {showDateType === 'order' ? format(parseISO(order.orderDate), 'dd-MM-yyyy') :
                                                         showDateType === 'updated' ? format(new Date(order.updatedAt || order.createdAt), 'dd-MM-yyyy') :
-                                                            order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : 'N/A'}
+                                                            order.deliveryDate ? format(parseISO(order.deliveryDate), 'dd-MM-yyyy') :
+                                                                order.dueDate ? format(parseISO(order.dueDate), 'dd-MM-yyyy') : 'N/A'}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground uppercase">
                                                     {showDateType === 'order' ? 'Ordered' :
-                                                        showDateType === 'updated' ? 'Updated' : 'Due'}
+                                                        showDateType === 'updated' ? 'Updated' :
+                                                            order.deliveryDate ? 'Delivery' : 'Due'}
                                                 </span>
                                             </div>
                                         </TableCell>
@@ -205,7 +207,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                             <div className="text-right">
                                 <h4 className="font-semibold text-sm text-muted-foreground mb-1">Dates</h4>
                                 <div><span className="font-medium">Ordered:</span> {format(parseISO(selectedOrder.orderDate), 'dd-MM-yyyy')}</div>
-                                {selectedOrder.dueDate && <div><span className="font-medium">Due:</span> {format(parseISO(selectedOrder.dueDate), 'dd-MM-yyyy')}</div>}
+                                {selectedOrder.deliveryDate ? (
+                                    <div className="text-blue-600"><span className="font-medium">Delivery:</span> {format(parseISO(selectedOrder.deliveryDate), 'dd-MM-yyyy')}</div>
+                                ) : (
+                                    selectedOrder.dueDate && <div><span className="font-medium">Due:</span> {format(parseISO(selectedOrder.dueDate), 'dd-MM-yyyy')}</div>
+                                )}
                             </div>
                         </div>
 
@@ -213,7 +219,7 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                             <div className="flex flex-col">
                                 <span className="text-xs text-muted-foreground font-semibold uppercase">Work Status</span>
                                 <Badge variant="outline" className={`mt-1 w-fit ${selectedOrder.workStatus === 'Ready' ? 'bg-green-100 text-green-800' :
-                                        selectedOrder.workStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''
+                                    selectedOrder.workStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''
                                     }`}>
                                     {selectedOrder.workStatus}
                                 </Badge>
@@ -228,7 +234,7 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                             <div className="flex flex-col">
                                 <span className="text-xs text-muted-foreground font-semibold uppercase">Payment</span>
                                 <Badge variant="outline" className={`mt-1 w-fit ${selectedOrder.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' :
-                                        selectedOrder.paymentStatus === 'Partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                                    selectedOrder.paymentStatus === 'Partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
                                     }`}>
                                     {selectedOrder.paymentStatus}
                                 </Badge>
