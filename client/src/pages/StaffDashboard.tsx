@@ -55,6 +55,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         (o) => o.workStatus === 'Ready' && o.deliveryStatus !== 'Delivered'
     );
 
+    // 7. Pending Payment List (Delivered but not Fully Paid)
+    const pendingPaymentOrders = store.orders.filter(
+        (o) => o.deliveryStatus === 'Delivered' && o.paymentStatus !== 'Paid'
+    );
+
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -130,6 +135,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
                                                 }>
                                                     {order.deliveryStatus}
                                                 </Badge>
+                                                {order.paymentStatus !== 'Paid' && (
+                                                    <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-700">
+                                                        Unpaid
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right text-red-600 font-medium">
@@ -180,6 +190,8 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
             <OrderTable orders={outstandingOrders} title="⚠️ Outstanding Deliveries" emptyMsg="No overdue orders." />
 
             <OrderTable orders={readyForDeliveryOrders} title="📦 Pending Delivery (Ready)" emptyMsg="No orders waiting for delivery." />
+
+            <OrderTable orders={pendingPaymentOrders} title="💰 Pending Payment (Delivered)" emptyMsg="No pending payments for delivered orders." />
 
             <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
 
