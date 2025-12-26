@@ -928,7 +928,7 @@ export default function Orders() {
                           </div>
                           <div className="text-right">
                             <div className="font-medium">₹{(item.price * item.quantity) - (item.discount || 0)}</div>
-                            {item.discount && <div className="text-xs text-muted-foreground line-through">₹{item.price * item.quantity}</div>}
+                            {item.discount ? <div className="text-xs text-muted-foreground line-through">₹{item.price * item.quantity}</div> : null}
                           </div>
                         </div>
                       ))}
