@@ -246,7 +246,15 @@ export default function Billing() {
                             <FormItem>
                               <FormLabel className={index !== 0 ? "sr-only" : ""}>Price</FormLabel>
                               <FormControl>
-                                <Input type="number" {...field} />
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value === 0 ? '' : field.value}
+                                  onChange={(e) => {
+                                    const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                    field.onChange(val);
+                                  }}
+                                />
                               </FormControl>
                             </FormItem>
                           )}

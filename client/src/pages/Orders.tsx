@@ -892,7 +892,7 @@ export default function Orders() {
                           <div className="col-span-3">
                             <Input
                               type="number"
-                              value={item.price}
+                              value={item.price === 0 ? '' : item.price}
                               onChange={(e) => updateEditedItem(idx, 'price', Number(e.target.value))}
                             />
                           </div>
@@ -900,7 +900,7 @@ export default function Orders() {
                             <Label className="text-xs">Discount</Label>
                             <Input
                               type="number"
-                              value={item.discount || 0}
+                              value={item.discount === 0 ? '' : item.discount}
                               onChange={(e) => updateEditedItem(idx, 'discount', Number(e.target.value))}
                             />
                           </div>
