@@ -248,6 +248,7 @@ export default function Billing() {
                               <FormControl>
                                 <Input
                                   type="number"
+                                  placeholder="0.00"
                                   {...field}
                                   value={field.value === 0 ? '' : field.value}
                                   onChange={(e) => {
@@ -294,7 +295,13 @@ export default function Billing() {
                             <Input
                               type="number"
                               className="text-right"
+                              placeholder="0.00"
                               {...field}
+                              value={field.value === 0 ? '' : field.value}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                field.onChange(val);
+                              }}
                             />
                           </FormControl>
                         </FormItem>

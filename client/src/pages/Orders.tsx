@@ -893,6 +893,7 @@ export default function Orders() {
                             <Label className="text-xs">Price</Label>
                             <Input
                               type="number"
+                              placeholder="0.00"
                               value={item.price === 0 ? '' : item.price}
                               onChange={(e) => updateEditedItem(idx, 'price', Number(e.target.value))}
                             />
@@ -901,6 +902,7 @@ export default function Orders() {
                             <Label className="text-xs">Discount</Label>
                             <Input
                               type="number"
+                              placeholder="0.00"
                               value={item.discount === 0 ? '' : item.discount}
                               onChange={(e) => updateEditedItem(idx, 'discount', Number(e.target.value))}
                             />
