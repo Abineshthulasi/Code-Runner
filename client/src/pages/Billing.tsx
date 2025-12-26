@@ -143,7 +143,7 @@ export default function Billing() {
                       <FormItem>
                         <FormLabel>Client Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Jane Doe" {...field} />
+                          <Input placeholder="Name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -156,7 +156,7 @@ export default function Billing() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="9876543210" {...field} />
+                          <Input placeholder="Mobile Number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
