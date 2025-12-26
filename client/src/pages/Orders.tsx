@@ -873,7 +873,7 @@ export default function Orders() {
                     <div className="space-y-4">
                       {editedItems.map((item, idx) => (
                         <div key={idx} className="grid grid-cols-12 gap-2 items-end border-b pb-4 last:border-0 last:pb-0">
-                          <div className="col-span-5">
+                          <div className="col-span-4">
                             <Label className="text-xs">Description</Label>
                             <Input
                               value={item.description}
@@ -890,6 +890,7 @@ export default function Orders() {
                             />
                           </div>
                           <div className="col-span-3">
+                            <Label className="text-xs">Price</Label>
                             <Input
                               type="number"
                               value={item.price === 0 ? '' : item.price}
@@ -904,8 +905,8 @@ export default function Orders() {
                               onChange={(e) => updateEditedItem(idx, 'discount', Number(e.target.value))}
                             />
                           </div>
-                          <div className="col-span-2">
-                            <Button variant="ghost" size="icon" className="text-destructive mt-4" onClick={() => removeEditedItem(idx)}>
+                          <div className="col-span-1">
+                            <Button variant="ghost" size="icon" className="text-destructive h-9 w-9" onClick={() => removeEditedItem(idx)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
