@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { useStore } from "@/lib/store";
 
 export default function AuthPage() {
     const { user, loginMutation } = useAuth();
@@ -75,6 +76,27 @@ export default function AuthPage() {
                             </Button>
                         </form>
                     </Form>
+
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">Or</span>
+                        </div>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        className="w-full border-dashed"
+                        onClick={() => {
+                            const setGuestMode = useStore.getState().setGuestMode;
+                            setGuestMode(true);
+                            // Navigation happens automatically due to auth state change
+                        }}
+                    >
+                        👀 Try Demo Mode (Guest)
+                    </Button>
                 </CardContent>
             </Card>
         </div>

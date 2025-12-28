@@ -7,6 +7,7 @@ import {
 import { InsertUser, User } from "@shared/schema";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/lib/store";
 
 type AuthContextType = {
     user: User | null;
@@ -23,6 +24,9 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const { toast } = useToast();
+    const isGuestMode = useStore(state => state.isGuestMode);
+    const setGuestMode = useStore(state => state.setGuestMode);
+
     const {
         data: user,
         error,
@@ -30,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = useQuery<User | undefined, Error>({
         queryKey: ["/api/user"],
         queryFn: getQueryFn({ on401: "returnNull" }),
+        enabled: !isGuestMode // Disable real auth check in guest mode
     });
 
     const loginMutation = useMutation({
@@ -38,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return await res.json();
         },
         onSuccess: (user: User) => {
+            setGuestMode(false); // Ensure we exit guest mode on real login
             queryClient.setQueryData(["/api/user"], user);
         },
         onError: (error: Error) => {
@@ -55,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return await res.json();
         },
         onSuccess: (user: User) => {
+            setGuestMode(false);
             queryClient.setQueryData(["/api/user"], user);
         },
         onError: (error: Error) => {
@@ -68,9 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logoutMutation = useMutation({
         mutationFn: async () => {
+            if (isGuestMode) {
+                setGuestMode(false);
+                return;
+            }
             await apiRequest("POST", "/api/logout");
         },
         onSuccess: () => {
+            setGuestMode(false);
             queryClient.setQueryData(["/api/user"], null);
         },
         onError: (error: Error) => {
@@ -82,12 +94,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
     });
 
+    // Guest User Object
+    const guestUser: User = {
+        id: 0,
+        username: "guest",
+        password: "",
+        role: "manager" as const,
+        createdAt: new Date()
+    };
+
+    const effectiveUser = isGuestMode ? guestUser : (user ?? null);
+
     return (
         <AuthContext.Provider
             value={{
-                user: user ?? null,
-                isLoading,
-                error,
+                user: effectiveUser,
+                isLoading: isGuestMode ? false : isLoading,
+                error: isGuestMode ? null : error,
                 loginMutation,
                 logoutMutation,
                 registerMutation,
@@ -106,16 +129,4 @@ export function useAuth() {
     return context;
 }
 
-// Helper to handle 401 cleanly in standard queries
-export function getQueryFn({ on401 }: { on401: "throw" | "returnNull" }) {
-    return async ({ queryKey }: { queryKey: readonly unknown[] }) => {
-        const res = await fetch(queryKey[0] as string);
-        if (on401 === "returnNull" && res.status === 401) {
-            return null;
-        }
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
-        return await res.json();
-    };
-}
+

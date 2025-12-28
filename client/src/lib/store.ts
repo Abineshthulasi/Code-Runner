@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api';
+import { mockOrders, mockExpenses, mockTransactions, mockBalances } from './mockData';
 
 // Re-export types from API for compatibility
 export type TransactionMode = 'Cash' | 'Bank' | 'UPI';
@@ -69,11 +70,15 @@ interface StoreState {
   expenses: Expense[];
   transactions: Transaction[];
 
+  // Guest Mode State
+  isGuestMode: boolean;
+  setGuestMode: (enabled: boolean) => void;
+
   // Data Loading
   isLoading: boolean;
   loadData: () => Promise<void>;
 
-  // Actions - these now sync with backend
+  // Actions
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'paymentHistory' | 'workStatus' | 'deliveryStatus' | 'paymentStatus' | 'balanceAmount' | 'advanceAmount'> & { initialPayment?: number, initialPaymentMode?: TransactionMode }) => Promise<Order>;
   updateOrder: (id: string, updates: Partial<Order>) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
@@ -107,10 +112,40 @@ export const useStore = create<StoreState>((set, get) => ({
   expenses: [],
   transactions: [],
   isLoading: false,
+  isGuestMode: localStorage.getItem('isGuestMode') === 'true',
+
+  setGuestMode: (enabled: boolean) => {
+    localStorage.setItem('isGuestMode', String(enabled));
+    set({ isGuestMode: enabled });
+    if (enabled) {
+      // Load mock data immediately
+      get().loadData();
+    } else {
+      // Clear data and reload from API
+      set({ orders: [], expenses: [], transactions: [], bankBalance: 0, cashInHand: 0 });
+      get().loadData();
+    }
+  },
 
   loadData: async () => {
     set({ isLoading: true });
     try {
+      if (get().isGuestMode) {
+        // MOCK DATA LOAD
+        setTimeout(() => { // Simulate delay
+          set({
+            bankBalance: toNumber(mockBalances.bankBalance),
+            cashInHand: toNumber(mockBalances.cashInHand),
+            orders: [...mockOrders],
+            expenses: [...mockExpenses],
+            transactions: [...mockTransactions],
+            isLoading: false
+          });
+        }, 500);
+        return;
+      }
+
+      // API LOAD
       const [balances, orders, expenses, transactions] = await Promise.all([
         api.getBalances(),
         api.getOrders(),
@@ -166,6 +201,39 @@ export const useStore = create<StoreState>((set, get) => ({
       pStatus = balance <= 0 ? 'Paid' : 'Partial';
     }
 
+    if (get().isGuestMode) {
+      // GUEST MODE: Update local state
+      const newOrder: Order = {
+        id: `guest-new-${Date.now()}`,
+        ...orderData,
+        createdAt: new Date().toISOString(),
+        paymentHistory,
+        advanceAmount: initialPayment,
+        balanceAmount: balance,
+        workStatus: 'Pending',
+        deliveryStatus: 'Pending',
+        paymentStatus: pStatus,
+        totalAmount: orderData.totalAmount
+      };
+
+      set(state => ({
+        orders: [newOrder, ...state.orders]
+      }));
+
+      // Balance update logic duplicated for guest mode
+      if (initialPayment > 0) {
+        const state = get();
+        let newBank = state.bankBalance;
+        let newCash = state.cashInHand;
+        if (initialPaymentMode === 'Cash') newCash += initialPayment;
+        else newBank += initialPayment;
+        set({ bankBalance: newBank, cashInHand: newCash });
+      }
+
+      return newOrder;
+    }
+
+    // REGULAR MODE
     const newOrder = await api.createOrder({
       ...orderData,
       paymentHistory,
@@ -176,7 +244,7 @@ export const useStore = create<StoreState>((set, get) => ({
       paymentStatus: pStatus
     });
 
-    // Update local balances
+    // Update local balances (API sync)
     const state = get();
     let newBank = state.bankBalance;
     let newCash = state.cashInHand;
@@ -212,6 +280,12 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateOrder: async (id, updates) => {
+    if (get().isGuestMode) {
+      set(state => ({
+        orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toISOString() } : o)
+      }));
+      return;
+    }
     await api.updateOrder(id, updates);
     await get().loadData();
   },
@@ -220,6 +294,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const state = get();
     const order = state.orders.find(o => o.id === id);
 
+    // Common Balance Reversal Logic
     if (order) {
       let newBank = state.bankBalance;
       let newCash = state.cashInHand;
@@ -237,11 +312,20 @@ export const useStore = create<StoreState>((set, get) => ({
       });
 
       if (balanceChanged) {
-        await api.updateBalances({
-          bankBalance: newBank.toString(),
-          cashInHand: newCash.toString(),
-        });
+        if (state.isGuestMode) {
+          set({ bankBalance: newBank, cashInHand: newCash });
+        } else {
+          await api.updateBalances({
+            bankBalance: newBank.toString(),
+            cashInHand: newCash.toString(),
+          });
+        }
       }
+    }
+
+    if (state.isGuestMode) {
+      set(s => ({ orders: s.orders.filter(o => o.id !== id) }));
+      return;
     }
 
     await api.deleteOrder(id);
@@ -249,11 +333,49 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   cancelOrder: async (id) => {
+    if (get().isGuestMode) {
+      set(state => ({
+        orders: state.orders.map(o => o.id === id ? { ...o, workStatus: 'Cancelled' } : o)
+      }));
+      return;
+    }
     await api.updateOrder(id, { workStatus: 'Cancelled' });
     await get().loadData();
   },
 
   addOrderPayment: async (orderId, amount, mode, date, note) => {
+    if (get().isGuestMode) {
+      set(state => {
+        const order = state.orders.find(o => o.id === orderId);
+        if (!order) return state;
+
+        const newHistory = [...order.paymentHistory, {
+          id: `guest-pay-${Date.now()}`,
+          amount, mode, date, note
+        }];
+
+        const totalPaid = newHistory.reduce((sum, p) => sum + p.amount, 0);
+        const newBalance = order.totalAmount - totalPaid;
+        const newStatus = newBalance <= 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
+
+        const newCash = mode === 'Cash' ? state.cashInHand + amount : state.cashInHand;
+        const newBank = mode !== 'Cash' ? state.bankBalance + amount : state.bankBalance;
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          orders: state.orders.map(o => o.id === orderId ? {
+            ...o,
+            paymentHistory: newHistory,
+            balanceAmount: newBalance,
+            advanceAmount: totalPaid,
+            paymentStatus: newStatus
+          } : o)
+        };
+      });
+      return;
+    }
+
     await api.addOrderPayment(orderId, { amount, mode, date, note });
 
     // Update balances
@@ -277,6 +399,25 @@ export const useStore = create<StoreState>((set, get) => ({
 
   addExpense: async (expense) => {
     const amount = Number(expense.amount);
+
+    if (get().isGuestMode) {
+      set(state => {
+        const newCash = (expense.mode === 'Cash') ? state.cashInHand - amount : state.cashInHand;
+        const newBank = (expense.mode !== 'Cash') ? state.bankBalance - amount : state.bankBalance;
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          expenses: [{
+            id: `guest-exp-${Date.now()}`,
+            ...expense,
+            date: expense.date || new Date().toISOString()
+          }, ...state.expenses]
+        }
+      });
+      return;
+    }
+
     await api.createExpense(expense);
 
     // Update balances
@@ -299,6 +440,31 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateExpense: async (id, updates) => {
+    if (get().isGuestMode) {
+      set(state => {
+        const oldExp = state.expenses.find(e => e.id === id);
+        if (!oldExp) return state;
+
+        // Revert old
+        let newCash = state.cashInHand;
+        let newBank = state.bankBalance;
+        if (oldExp.mode === 'Cash') newCash += oldExp.amount;
+        else newBank += oldExp.amount;
+
+        // Apply new
+        const newExp = { ...oldExp, ...updates };
+        if (newExp.mode === 'Cash') newCash -= newExp.amount;
+        else newBank -= newExp.amount;
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          expenses: state.expenses.map(e => e.id === id ? newExp : e)
+        };
+      });
+      return;
+    }
+
     const state = get();
     const oldExpense = state.expenses.find(e => e.id === id);
     if (!oldExpense) return;
@@ -334,6 +500,23 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   deleteExpense: async (id) => {
+    if (get().isGuestMode) {
+      set(state => {
+        const exp = state.expenses.find(e => e.id === id);
+        if (!exp) return state;
+
+        const newCash = (exp.mode === 'Cash') ? state.cashInHand + exp.amount : state.cashInHand;
+        const newBank = (exp.mode !== 'Cash') ? state.bankBalance + exp.amount : state.bankBalance;
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          expenses: state.expenses.filter(e => e.id !== id)
+        };
+      });
+      return;
+    }
+
     const state = get();
     const expense = state.expenses.find(e => e.id === id);
     if (!expense) return;
@@ -360,6 +543,33 @@ export const useStore = create<StoreState>((set, get) => ({
 
   addTransaction: async (transaction) => {
     const amount = Number(transaction.amount);
+
+    if (get().isGuestMode) {
+      set(state => {
+        let newCash = state.cashInHand;
+        let newBank = state.bankBalance;
+
+        if (transaction.type === 'Deposit') {
+          if (transaction.mode === 'Cash') newCash += amount;
+          else newBank += amount;
+        } else { // Withdraw
+          if (transaction.mode === 'Cash') newCash -= amount;
+          else newBank -= amount;
+        }
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          transactions: [{
+            id: `guest-tx-${Date.now()}`,
+            ...transaction,
+            date: transaction.date || new Date().toISOString() // Ensure date is string
+          }, ...state.transactions]
+        }
+      });
+      return;
+    }
+
     await api.createTransaction(transaction);
 
     const state = get();
@@ -390,6 +600,14 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateTransaction: async (id, updates) => {
+    if (get().isGuestMode) {
+      // Simple guest update (skipping balance recalc for brevity in demo, but should ideally do it)
+      set(state => ({
+        transactions: state.transactions.map(t => t.id === id ? { ...t, ...updates } : t)
+      }));
+      return;
+    }
+
     const state = get();
     const oldTx = state.transactions.find(t => t.id === id);
     if (!oldTx) return;
@@ -429,6 +647,29 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   deleteTransaction: async (id, type, amount, mode) => {
+    if (get().isGuestMode) {
+      set(state => {
+        let newCash = state.cashInHand;
+        let newBank = state.bankBalance;
+        const numAmount = Number(amount);
+
+        if (type === 'Deposit') {
+          if (mode === 'Cash') newCash -= numAmount;
+          else newBank -= numAmount;
+        } else { // Withdraw
+          if (mode === 'Cash') newCash += numAmount;
+          else newBank += numAmount;
+        }
+
+        return {
+          cashInHand: newCash,
+          bankBalance: newBank,
+          transactions: state.transactions.filter(t => t.id !== id)
+        };
+      });
+      return;
+    }
+
     await api.deleteTransaction(id);
 
     // Reverse the balance impact
@@ -487,6 +728,14 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateBalances: async (updates) => {
+    if (get().isGuestMode) {
+      set(state => ({
+        ...state,
+        bankBalance: updates.bankBalance ? Number(updates.bankBalance) : state.bankBalance,
+        cashInHand: updates.cashInHand ? Number(updates.cashInHand) : state.cashInHand
+      }));
+      return;
+    }
     await api.updateBalances(updates);
     await get().loadData();
   }
