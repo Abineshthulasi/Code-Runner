@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: 0,
         username: "guest",
         password: "",
-        role: "manager" as const,
+        role: "admin" as const,
         createdAt: new Date()
     };
 
