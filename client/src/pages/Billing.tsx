@@ -156,7 +156,21 @@ export default function Billing() {
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Mobile Number" {...field} />
+                          <Input
+                            placeholder="Mobile Number"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              const phone = e.target.value;
+                              if (phone.length >= 3) {
+                                // Find latest order with this phone number
+                                const match = store.orders.find(o => o.phone === phone);
+                                if (match && match.clientName) {
+                                  form.setValue("clientName", match.clientName);
+                                }
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
