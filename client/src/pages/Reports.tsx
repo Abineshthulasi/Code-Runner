@@ -885,191 +885,189 @@ export default function Reports() {
             </div>
 
             {/* 0. End of Day Balance */}
+            {/* 0. End of Day Balance */}
             <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
               <div className="text-center">
-                {/* 0. End of Day Balance */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Cash In Hand (Day End)</div>
-                    <div className="text-2xl font-bold">₹{dailyStats.closingCash.toLocaleString()}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Bank Balance (Day End)</div>
-                    <div className="text-2xl font-bold">₹{dailyStats.closingBank.toLocaleString()}</div>
-                  </div>
-                </div>
-
-                {/* 1. Sales List */}
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <h3 className="font-semibold text-lg">Sales Received</h3>
-                    <div className="text-right">
-                      <div className="text-green-600 font-bold text-lg">₹{dailyStats.salesReceived.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Cash: ₹{dailyStats.salesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.salesBank.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="py-2">Client/Order</TableHead>
-                          <TableHead className="py-2">Mode</TableHead>
-                          <TableHead className="text-right py-2">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dailyStats.salesList.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No sales today</TableCell>
-                          </TableRow>
-                        ) : (
-                          dailyStats.salesList.map((item, i) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="py-2">{item.desc}</TableCell>
-                              <TableCell className="py-2">{item.mode}</TableCell>
-                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                {/* 2. Deposits List */}
-                <div>
-                  <h3 className="font-semibold text-lg flex justify-between">
-                    Added Funds (Deposits)
-                    <span className="text-green-600">₹{dailyStats.depositsList.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}</span>
-                  </h3>
-                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="py-2">Description</TableHead>
-                          <TableHead className="py-2">Mode</TableHead>
-                          <TableHead className="text-right py-2">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dailyStats.depositsList.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No deposits today</TableCell>
-                          </TableRow>
-                        ) : (
-                          dailyStats.depositsList.map((item, i) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="py-2">{item.desc}</TableCell>
-                              <TableCell className="py-2">{item.mode}</TableCell>
-                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                {/* 3. Withdrawals List */}
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <h3 className="font-semibold text-lg">Withdrawals</h3>
-                    <div className="text-right">
-                      <div className="text-red-600 font-bold text-lg">₹{(dailyStats.withdrawalsCash + dailyStats.withdrawalsBank).toLocaleString()}</div>
-                    </div>
-                  </div>
-                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="py-2">Description</TableHead>
-                          <TableHead className="py-2">Mode</TableHead>
-                          <TableHead className="text-right py-2">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dailyStats.withdrawalsList.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No withdrawals today</TableCell>
-                          </TableRow>
-                        ) : (
-                          dailyStats.withdrawalsList.map((item, i) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="py-2">{item.desc}</TableCell>
-                              <TableCell className="py-2">{item.mode}</TableCell>
-                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                {/* 4. Expenses List */}
-                <div>
-                  <div className="flex justify-between items-end mb-2">
-                    <h3 className="font-semibold text-lg">Expenses</h3>
-                    <div className="text-right">
-                      <div className="text-red-600 font-bold text-lg">₹{dailyStats.expenses.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Cash: ₹{dailyStats.expensesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.expensesBank.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="py-2">Description</TableHead>
-                          <TableHead className="py-2">Mode</TableHead>
-                          <TableHead className="text-right py-2">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dailyStats.expensesList.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No expenses today</TableCell>
-                          </TableRow>
-                        ) : (
-                          dailyStats.expensesList.map((item, i) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="py-2">{item.desc}</TableCell>
-                              <TableCell className="py-2">{item.mode}</TableCell>
-                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <span className="text-sm font-medium">Total Cash Flow:</span>
-                    <div className="text-xl font-bold">
-                      <span className="text-green-600">+₹{dailyStats.cashAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsCash).toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium">Total UPI/Bank Flow:</span>
-                    <div className="text-xl font-bold">
-                      <span className="text-green-600">+₹{dailyStats.bankAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode !== 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsBank).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
+                <div className="text-sm font-medium text-muted-foreground mb-1">Cash In Hand (Day End)</div>
+                <div className="text-2xl font-bold">₹{dailyStats.closingCash.toLocaleString()}</div>
               </div>
+              <div className="text-center">
+                <div className="text-sm font-medium text-muted-foreground mb-1">Bank Balance (Day End)</div>
+                <div className="text-2xl font-bold">₹{dailyStats.closingBank.toLocaleString()}</div>
+              </div>
+            </div>
 
-              <DialogFooter>
-                <Button onClick={() => setShowDailyReport(false)}>Close</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </Layout>
-        );
+            {/* 1. Sales List */}
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <h3 className="font-semibold text-lg">Sales Received</h3>
+                <div className="text-right">
+                  <div className="text-green-600 font-bold text-lg">₹{dailyStats.salesReceived.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Cash: ₹{dailyStats.salesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.salesBank.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="py-2">Client/Order</TableHead>
+                      <TableHead className="py-2">Mode</TableHead>
+                      <TableHead className="text-right py-2">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyStats.salesList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No sales today</TableCell>
+                      </TableRow>
+                    ) : (
+                      dailyStats.salesList.map((item, i) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="py-2">{item.desc}</TableCell>
+                          <TableCell className="py-2">{item.mode}</TableCell>
+                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* 2. Deposits List */}
+            <div>
+              <h3 className="font-semibold text-lg flex justify-between">
+                Added Funds (Deposits)
+                <span className="text-green-600">₹{dailyStats.depositsList.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}</span>
+              </h3>
+              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="py-2">Description</TableHead>
+                      <TableHead className="py-2">Mode</TableHead>
+                      <TableHead className="text-right py-2">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyStats.depositsList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No deposits today</TableCell>
+                      </TableRow>
+                    ) : (
+                      dailyStats.depositsList.map((item, i) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="py-2">{item.desc}</TableCell>
+                          <TableCell className="py-2">{item.mode}</TableCell>
+                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* 3. Withdrawals List */}
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <h3 className="font-semibold text-lg">Withdrawals</h3>
+                <div className="text-right">
+                  <div className="text-red-600 font-bold text-lg">₹{(dailyStats.withdrawalsCash + dailyStats.withdrawalsBank).toLocaleString()}</div>
+                </div>
+              </div>
+              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="py-2">Description</TableHead>
+                      <TableHead className="py-2">Mode</TableHead>
+                      <TableHead className="text-right py-2">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyStats.withdrawalsList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No withdrawals today</TableCell>
+                      </TableRow>
+                    ) : (
+                      dailyStats.withdrawalsList.map((item, i) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="py-2">{item.desc}</TableCell>
+                          <TableCell className="py-2">{item.mode}</TableCell>
+                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* 4. Expenses List */}
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <h3 className="font-semibold text-lg">Expenses</h3>
+                <div className="text-right">
+                  <div className="text-red-600 font-bold text-lg">₹{dailyStats.expenses.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Cash: ₹{dailyStats.expensesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.expensesBank.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="py-2">Description</TableHead>
+                      <TableHead className="py-2">Mode</TableHead>
+                      <TableHead className="text-right py-2">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyStats.expensesList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No expenses today</TableCell>
+                      </TableRow>
+                    ) : (
+                      dailyStats.expensesList.map((item, i) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="py-2">{item.desc}</TableCell>
+                          <TableCell className="py-2">{item.mode}</TableCell>
+                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <span className="text-sm font-medium">Total Cash Flow:</span>
+                <div className="text-xl font-bold">
+                  <span className="text-green-600">+₹{dailyStats.cashAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsCash).toLocaleString()}</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-sm font-medium">Total UPI/Bank Flow:</span>
+                <div className="text-xl font-bold">
+                  <span className="text-green-600">+₹{dailyStats.bankAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode !== 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsBank).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowDailyReport(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Layout>
+  );
 }
 
