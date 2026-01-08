@@ -351,6 +351,12 @@ export default function Reports() {
     let cashAdded = 0; // Cash Sales + Cash Deposits
     let bankAdded = 0; // Bank Sales + Bank Deposits
 
+    // Detailed Splits
+    let salesCash = 0;
+    let salesBank = 0;
+    let expensesCash = 0;
+    let expensesBank = 0;
+
     const salesList: any[] = [];
     const expensesList: any[] = [];
     const depositsList: any[] = [];
@@ -361,8 +367,13 @@ export default function Reports() {
         if (p.date === date) {
           const amt = Number(p.amount);
           salesReceived += amt;
-          if (p.mode === 'Cash') cashAdded += amt;
-          else bankAdded += amt;
+          if (p.mode === 'Cash') {
+            cashAdded += amt;
+            salesCash += amt;
+          } else {
+            bankAdded += amt;
+            salesBank += amt;
+          }
 
           salesList.push({
             id: order.id + '_' + p.date,
@@ -378,6 +389,9 @@ export default function Reports() {
     store.expenses.forEach(e => {
       if (e.date === date) {
         expenses += Number(e.amount);
+        if (e.mode === 'Cash') expensesCash += Number(e.amount);
+        else expensesBank += Number(e.amount);
+
         expensesList.push({
           id: e.id,
           desc: e.description,
@@ -405,7 +419,8 @@ export default function Reports() {
 
     return {
       salesReceived, expenses, cashAdded, bankAdded,
-      salesList, expensesList, depositsList
+      salesList, expensesList, depositsList,
+      salesCash, salesBank, expensesCash, expensesBank
     };
   }, [dailyReportDate, store.orders, store.expenses, store.transactions]);
 
@@ -816,10 +831,15 @@ export default function Reports() {
 
             {/* 1. Sales List */}
             <div>
-              <h3 className="font-semibold text-lg flex justify-between">
-                Sales Received
-                <span className="text-green-600">₹{dailyStats.salesReceived.toLocaleString()}</span>
-              </h3>
+              <div className="flex justify-between items-end mb-2">
+                <h3 className="font-semibold text-lg">Sales Received</h3>
+                <div className="text-right">
+                  <div className="text-green-600 font-bold text-lg">₹{dailyStats.salesReceived.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Cash: ₹{dailyStats.salesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.salesBank.toLocaleString()}
+                  </div>
+                </div>
+              </div>
               <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
                 <Table>
                   <TableHeader>
@@ -937,8 +957,8 @@ export default function Reports() {
             <Button onClick={() => setShowDailyReport(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </Layout>
+      </Dialog >
+    </Layout >
   );
 }
 
