@@ -346,26 +346,44 @@ export default function Reports() {
 
   const dailyStats = useMemo(() => {
     const date = dailyReportDate;
+
+    // Daily Specific Stats
     let salesReceived = 0;
     let expenses = 0;
     let cashAdded = 0; // Cash Sales + Cash Deposits
     let bankAdded = 0; // Bank Sales + Bank Deposits
 
-    // Detailed Splits
+    // Detailed Splits for Today
     let salesCash = 0;
     let salesBank = 0;
     let expensesCash = 0;
     let expensesBank = 0;
+    let withdrawalsCash = 0;
+    let withdrawalsBank = 0;
 
     const salesList: any[] = [];
     const expensesList: any[] = [];
     const depositsList: any[] = [];
+    const withdrawalsList: any[] = [];
 
-    // 1. Sales Received (from Orders)
+    // Closing Balance Calculation (Running Total up to selected date)
+    let closingCash = 0;
+    let closingBank = 0;
+
+    // 1. Process Orders (Sales)
     store.orders.forEach(order => {
       order.paymentHistory.forEach(p => {
-        if (p.date === date) {
-          const amt = Number(p.amount);
+        const pDate = p.date;
+        const amt = Number(p.amount);
+
+        // Running Total (All history up to selected date)
+        if (pDate <= date) {
+          if (p.mode === 'Cash') closingCash += amt;
+          else closingBank += amt;
+        }
+
+        // Daily Specific
+        if (pDate === date) {
           salesReceived += amt;
           if (p.mode === 'Cash') {
             cashAdded += amt;
@@ -385,42 +403,79 @@ export default function Reports() {
       });
     });
 
-    // 2. Expenses
+    // 2. Process Expenses
     store.expenses.forEach(e => {
-      if (e.date === date) {
-        expenses += Number(e.amount);
-        if (e.mode === 'Cash') expensesCash += Number(e.amount);
-        else expensesBank += Number(e.amount);
+      const eDate = e.date;
+      const amt = Number(e.amount);
+
+      // Running Total
+      if (eDate <= date) {
+        if (e.mode === 'Cash') closingCash -= amt;
+        else closingBank -= amt;
+      }
+
+      // Daily Specific
+      if (eDate === date) {
+        expenses += amt;
+        if (e.mode === 'Cash') expensesCash += amt;
+        else expensesBank += amt;
 
         expensesList.push({
           id: e.id,
           desc: e.description,
-          amount: Number(e.amount),
+          amount: amt,
           mode: e.mode
         });
       }
     });
 
-    // 3. Deposits (Add Funds)
+    // 3. Process Transactions (Deposits & Withdrawals)
     store.transactions.forEach(t => {
-      if (t.date === date && t.type === 'Deposit') {
-        const amt = Number(t.amount);
-        if (t.mode === 'Cash') cashAdded += amt;
-        else bankAdded += amt;
+      const tDate = t.date;
+      const amt = Number(t.amount);
 
-        depositsList.push({
-          id: t.id,
-          desc: t.description || 'Deposit',
-          amount: amt,
-          mode: t.mode
-        });
+      // Running Total
+      if (tDate <= date) {
+        if (t.type === 'Deposit') {
+          if (t.mode === 'Cash') closingCash += amt;
+          else closingBank += amt;
+        } else if (t.type === 'Withdraw') {
+          if (t.mode === 'Cash') closingCash -= amt;
+          else closingBank -= amt;
+        }
+      }
+
+      // Daily Specific
+      if (tDate === date) {
+        if (t.type === 'Deposit') {
+          if (t.mode === 'Cash') cashAdded += amt;
+          else bankAdded += amt;
+
+          depositsList.push({
+            id: t.id,
+            desc: t.description || 'Deposit',
+            amount: amt,
+            mode: t.mode
+          });
+        } else if (t.type === 'Withdraw') {
+          if (t.mode === 'Cash') withdrawalsCash += amt;
+          else withdrawalsBank += amt;
+
+          withdrawalsList.push({
+            id: t.id,
+            desc: t.description || 'Withdrawal',
+            amount: amt,
+            mode: t.mode
+          });
+        }
       }
     });
 
     return {
       salesReceived, expenses, cashAdded, bankAdded,
-      salesList, expensesList, depositsList,
-      salesCash, salesBank, expensesCash, expensesBank
+      salesList, expensesList, depositsList, withdrawalsList,
+      salesCash, salesBank, expensesCash, expensesBank, withdrawalsCash, withdrawalsBank,
+      closingCash, closingBank
     };
   }, [dailyReportDate, store.orders, store.expenses, store.transactions]);
 
@@ -813,7 +868,7 @@ export default function Reports() {
 
       {/* Daily Report Dialog */}
       <Dialog open={showDailyReport} onOpenChange={setShowDailyReport}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Daily Financial Summary</DialogTitle>
           </DialogHeader>
@@ -829,136 +884,192 @@ export default function Reports() {
               />
             </div>
 
-            {/* 1. Sales List */}
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <h3 className="font-semibold text-lg">Sales Received</h3>
-                <div className="text-right">
-                  <div className="text-green-600 font-bold text-lg">₹{dailyStats.salesReceived.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Cash: ₹{dailyStats.salesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.salesBank.toLocaleString()}
+            {/* 0. End of Day Balance */}
+            <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+              <div className="text-center">
+                {/* 0. End of Day Balance */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Cash In Hand (Day End)</div>
+                    <div className="text-2xl font-bold">₹{dailyStats.closingCash.toLocaleString()}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Bank Balance (Day End)</div>
+                    <div className="text-2xl font-bold">₹{dailyStats.closingBank.toLocaleString()}</div>
                   </div>
                 </div>
-              </div>
-              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="py-2">Client/Order</TableHead>
-                      <TableHead className="py-2">Mode</TableHead>
-                      <TableHead className="text-right py-2">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dailyStats.salesList.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No sales today</TableCell>
-                      </TableRow>
-                    ) : (
-                      dailyStats.salesList.map((item, i) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="py-2">{item.desc}</TableCell>
-                          <TableCell className="py-2">{item.mode}</TableCell>
-                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
 
-            {/* 2. Deposits List */}
-            <div>
-              <h3 className="font-semibold text-lg flex justify-between">
-                Added Funds (Deposits)
-                <span className="text-green-600">₹{dailyStats.depositsList.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}</span>
-              </h3>
-              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="py-2">Description</TableHead>
-                      <TableHead className="py-2">Mode</TableHead>
-                      <TableHead className="text-right py-2">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dailyStats.depositsList.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No deposits today</TableCell>
-                      </TableRow>
-                    ) : (
-                      dailyStats.depositsList.map((item, i) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="py-2">{item.desc}</TableCell>
-                          <TableCell className="py-2">{item.mode}</TableCell>
-                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                {/* 1. Sales List */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <h3 className="font-semibold text-lg">Sales Received</h3>
+                    <div className="text-right">
+                      <div className="text-green-600 font-bold text-lg">₹{dailyStats.salesReceived.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Cash: ₹{dailyStats.salesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.salesBank.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="py-2">Client/Order</TableHead>
+                          <TableHead className="py-2">Mode</TableHead>
+                          <TableHead className="text-right py-2">Amount</TableHead>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* 3. Expenses List */}
-            <div>
-              <h3 className="font-semibold text-lg flex justify-between">
-                Expenses
-                <span className="text-red-600">₹{dailyStats.expenses.toLocaleString()}</span>
-              </h3>
-              <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="py-2">Description</TableHead>
-                      <TableHead className="py-2">Mode</TableHead>
-                      <TableHead className="text-right py-2">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dailyStats.expensesList.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No expenses today</TableCell>
-                      </TableRow>
-                    ) : (
-                      dailyStats.expensesList.map((item, i) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="py-2">{item.desc}</TableCell>
-                          <TableCell className="py-2">{item.mode}</TableCell>
-                          <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div>
-                <span className="text-sm font-medium">Total Cash Flow:</span>
-                <div className="text-xl font-bold">
-                  <span className="text-green-600">+₹{dailyStats.cashAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{dailyStats.expensesList.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}</span>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyStats.salesList.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No sales today</TableCell>
+                          </TableRow>
+                        ) : (
+                          dailyStats.salesList.map((item, i) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="py-2">{item.desc}</TableCell>
+                              <TableCell className="py-2">{item.mode}</TableCell>
+                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <span className="text-sm font-medium">Total Bank Flow:</span>
-                <div className="text-xl font-bold">
-                  <span className="text-green-600">+₹{dailyStats.bankAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{dailyStats.expensesList.filter(e => e.mode !== 'Cash').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}</span>
+
+                {/* 2. Deposits List */}
+                <div>
+                  <h3 className="font-semibold text-lg flex justify-between">
+                    Added Funds (Deposits)
+                    <span className="text-green-600">₹{dailyStats.depositsList.reduce((sum, d) => sum + d.amount, 0).toLocaleString()}</span>
+                  </h3>
+                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="py-2">Description</TableHead>
+                          <TableHead className="py-2">Mode</TableHead>
+                          <TableHead className="text-right py-2">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyStats.depositsList.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No deposits today</TableCell>
+                          </TableRow>
+                        ) : (
+                          dailyStats.depositsList.map((item, i) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="py-2">{item.desc}</TableCell>
+                              <TableCell className="py-2">{item.mode}</TableCell>
+                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
+
+                {/* 3. Withdrawals List */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <h3 className="font-semibold text-lg">Withdrawals</h3>
+                    <div className="text-right">
+                      <div className="text-red-600 font-bold text-lg">₹{(dailyStats.withdrawalsCash + dailyStats.withdrawalsBank).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="py-2">Description</TableHead>
+                          <TableHead className="py-2">Mode</TableHead>
+                          <TableHead className="text-right py-2">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyStats.withdrawalsList.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No withdrawals today</TableCell>
+                          </TableRow>
+                        ) : (
+                          dailyStats.withdrawalsList.map((item, i) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="py-2">{item.desc}</TableCell>
+                              <TableCell className="py-2">{item.mode}</TableCell>
+                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* 4. Expenses List */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <h3 className="font-semibold text-lg">Expenses</h3>
+                    <div className="text-right">
+                      <div className="text-red-600 font-bold text-lg">₹{dailyStats.expenses.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Cash: ₹{dailyStats.expensesCash.toLocaleString()} | UPI/Bank: ₹{dailyStats.expensesBank.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border rounded-md mt-2 max-h-40 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="py-2">Description</TableHead>
+                          <TableHead className="py-2">Mode</TableHead>
+                          <TableHead className="text-right py-2">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyStats.expensesList.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-2">No expenses today</TableCell>
+                          </TableRow>
+                        ) : (
+                          dailyStats.expensesList.map((item, i) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="py-2">{item.desc}</TableCell>
+                              <TableCell className="py-2">{item.mode}</TableCell>
+                              <TableCell className="text-right py-2">₹{item.amount.toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <span className="text-sm font-medium">Total Cash Flow:</span>
+                    <div className="text-xl font-bold">
+                      <span className="text-green-600">+₹{dailyStats.cashAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode === 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsCash).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium">Total UPI/Bank Flow:</span>
+                    <div className="text-xl font-bold">
+                      <span className="text-green-600">+₹{dailyStats.bankAdded.toLocaleString()}</span> / <span className="text-red-600">-₹{(dailyStats.expensesList.filter(e => e.mode !== 'Cash').reduce((sum, e) => sum + e.amount, 0) + dailyStats.withdrawalsBank).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-            </div>
 
-          </div>
-
-          <DialogFooter>
-            <Button onClick={() => setShowDailyReport(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog >
-    </Layout >
-  );
+              <DialogFooter>
+                <Button onClick={() => setShowDailyReport(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Layout>
+        );
 }
 
