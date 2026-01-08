@@ -331,44 +331,47 @@ export default function Reports() {
     }, 0);
   }, [store.orders]);
 
-  // Balance Adjustment Logic
-  const [adjustingData, setAdjustingData] = useState<{
-    monthIndex: number;
-    year: number;
-    type: 'Bank' | 'Cash';
-    currentBalance: number;
-  } | null>(null);
-  const [newBalance, setNewBalance] = useState("");
+  // Daily Report Logic
+  const [showDailyReport, setShowDailyReport] = useState(false);
+  const [dailyReportDate, setDailyReportDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const handleAdjustBalance = async () => {
-    if (!adjustingData || !newBalance) return;
+  const dailyStats = useMemo(() => {
+    const date = dailyReportDate;
+    let salesReceived = 0;
+    let expenses = 0;
+    let cashAdded = 0; // Cash Sales + Cash Deposits
+    let bankAdded = 0; // Bank Sales + Bank Deposits
 
-    const diff = Number(newBalance) - adjustingData.currentBalance;
-    if (diff === 0) {
-      setAdjustingData(null);
-      return;
-    }
-
-    // Create adjustment transaction
-    // Date should be end of that month
-    const year = adjustingData.year;
-    const month = adjustingData.monthIndex;
-    const adjustmentDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-
-    const type = diff > 0 ? 'Deposit' : 'Withdraw';
-    const amount = Math.abs(diff);
-
-    await store.addTransaction({
-      description: `Balance Adjustment (${MONTHS[month]})`,
-      amount: amount,
-      type: type,
-      mode: adjustingData.type,
-      date: adjustmentDate
+    // 1. Sales Received (from Orders)
+    store.orders.forEach(order => {
+      order.paymentHistory.forEach(p => {
+        if (p.date === date) {
+          const amt = Number(p.amount);
+          salesReceived += amt;
+          if (p.mode === 'Cash') cashAdded += amt;
+          else bankAdded += amt;
+        }
+      });
     });
 
-    setAdjustingData(null);
-    setNewBalance("");
-  };
+    // 2. Expenses
+    store.expenses.forEach(e => {
+      if (e.date === date) {
+        expenses += Number(e.amount);
+      }
+    });
+
+    // 3. Deposits (Add Funds)
+    store.transactions.forEach(t => {
+      if (t.date === date && t.type === 'Deposit') {
+        const amt = Number(t.amount);
+        if (t.mode === 'Cash') cashAdded += amt;
+        else bankAdded += amt;
+      }
+    });
+
+    return { salesReceived, expenses, cashAdded, bankAdded };
+  }, [dailyReportDate, store.orders, store.expenses, store.transactions]);
 
   return (
     <Layout>
@@ -378,17 +381,25 @@ export default function Reports() {
             <h2 className="text-3xl font-bold tracking-tight">Monthly Reports</h2>
             <p className="text-muted-foreground">View financial summaries by month</p>
           </div>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {YEARS.map(year => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowDailyReport(true)}>
+              <Calendar className="mr-2 h-4 w-4" />
+              Daily Summary
+            </Button>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {YEARS.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* ... (Rest of existing JSX) ... */}
 
         {/* Year Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -709,10 +720,71 @@ export default function Reports() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Daily Report Dialog */}
+      <Dialog open={showDailyReport} onOpenChange={setShowDailyReport}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Daily Financial Summary</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-2">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium whitespace-nowrap">Select Date:</label>
+              <Input
+                type="date"
+                value={dailyReportDate}
+                onChange={(e) => setDailyReportDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-4">
+              {/* 1. Sales Received */}
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Total Sales Received</span>
+                <span className="text-green-600 font-bold">₹{dailyStats.salesReceived.toLocaleString()}</span>
+              </div>
+
+              {/* 2. Expenses */}
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="font-medium">Total Expenses</span>
+                <span className="text-red-600 font-bold">₹{dailyStats.expenses.toLocaleString()}</span>
+              </div>
+
+              {/* 3. Cash Added (Breakdown) */}
+              <div className="space-y-1 py-2 border-b">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Cash Added</span>
+                  <span className="font-bold">₹{dailyStats.cashAdded.toLocaleString()}</span>
+                </div>
+                <div className="text-xs text-muted-foreground text-right">
+                  (Includes Cash Sales & Deposits)
+                </div>
+              </div>
+
+              {/* 4. Funds Added (Bank) */}
+              <div className="space-y-1 py-2 border-b">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Bank Added</span>
+                  <span className="font-bold">₹{dailyStats.bankAdded.toLocaleString()}</span>
+                </div>
+                <div className="text-xs text-muted-foreground text-right">
+                  (Includes Bank Sales & Deposits)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowDailyReport(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
-import { Pencil } from "lucide-react";
+import { Pencil, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
