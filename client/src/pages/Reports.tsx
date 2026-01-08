@@ -382,6 +382,45 @@ export default function Reports() {
     return { salesReceived, expenses, cashAdded, bankAdded };
   }, [dailyReportDate, store.orders, store.expenses, store.transactions]);
 
+  // Balance Adjustment Logic
+  const [adjustingData, setAdjustingData] = useState<{
+    monthIndex: number;
+    year: number;
+    type: 'Bank' | 'Cash';
+    currentBalance: number;
+  } | null>(null);
+  const [newBalance, setNewBalance] = useState("");
+
+  const handleAdjustBalance = async () => {
+    if (!adjustingData || !newBalance) return;
+
+    const diff = Number(newBalance) - adjustingData.currentBalance;
+    if (diff === 0) {
+      setAdjustingData(null);
+      return;
+    }
+
+    // Create adjustment transaction
+    // Date should be end of that month
+    const year = adjustingData.year;
+    const month = adjustingData.monthIndex;
+    const adjustmentDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    const type = diff > 0 ? 'Deposit' : 'Withdraw';
+    const amount = Math.abs(diff);
+
+    await store.addTransaction({
+      description: `Balance Adjustment (${MONTHS[month]})`,
+      amount: amount,
+      type: type,
+      mode: adjustingData.type,
+      date: adjustmentDate
+    });
+
+    setAdjustingData(null);
+    setNewBalance("");
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
