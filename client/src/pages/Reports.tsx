@@ -17,9 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useMemo } from "react";
-import { TrendingUp, TrendingDown, Wallet, IndianRupee, Clock, Pencil, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, IndianRupee, Clock, Pencil, Calendar, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { exportMonthlyStatsToExcel } from "@/lib/excel";
 import {
   Dialog,
   DialogContent,
@@ -518,6 +519,10 @@ export default function Reports() {
     setNewBalance("");
   };
 
+  const handleDownloadReport = () => {
+    exportMonthlyStatsToExcel(monthlyReport, `Monthly_Report_${selectedYear}`);
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
@@ -530,6 +535,10 @@ export default function Reports() {
             <Button variant="outline" onClick={() => setShowDailyReport(true)}>
               <Calendar className="mr-2 h-4 w-4" />
               Daily Summary
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownloadReport} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download Report
             </Button>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-32">

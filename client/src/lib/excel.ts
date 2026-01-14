@@ -20,7 +20,7 @@ export const exportOrdersToExcel = (orders: Order[], filename: string) => {
             'Items': itemsString,
             'Work Status': order.workStatus,
             'Delivery Status': order.deliveryStatus,
-            'Delivered Date': order.deliveredDate || '',
+            'Delivered Date': order.deliveryDate || '',
             'Payment Status': order.paymentStatus,
             'Total Amount': order.totalAmount,
             'Paid Amount': totalPaid,
@@ -105,3 +105,61 @@ export const exportTransactionsToExcel = (transactions: any[], filename: string)
 
     XLSX.writeFile(workbook, `${filename}.xlsx`);
 };
+
+export const exportMonthlyStatsToExcel = (monthlyData: any[], filename: string) => {
+    const data = monthlyData.map(m => ({
+        'Month': `${m.month} ${m.year}`,
+        'Total Sales Made': m.totalSales,
+        'Sales Received (Total)': m.sales,
+        'Sales (Cash)': m.salesCash,
+        'Sales (Bank)': m.salesBank,
+        'Expenses (Total)': m.expenses,
+        'Expenses (Cash)': m.expensesCash,
+        'Expenses (Bank)': m.expensesBank,
+        'Deposits (Total)': m.deposits,
+        'Deposits (Cash)': m.depositsCash,
+        'Deposits (Bank)': m.depositsBank,
+        'Withdrawals (Total)': m.withdrawals,
+        'Withdrawals (Cash)': m.withdrawalsCash,
+        'Withdrawals (Bank)': m.withdrawalsBank,
+        'Pending Amount (New)': m.pending,
+        'Prev Month Recovery': m.prevMonthRecovery,
+        'Opening Balance (Cash)': m.openingCash,
+        'Closing Balance (Cash)': m.closingCash,
+        'Opening Balance (Bank)': m.openingBank,
+        'Closing Balance (Bank)': m.closingBank
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    // Add summary row at the bottom?
+    // For now just raw data
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Report");
+
+    const wscols = [
+        { wch: 15 }, // Month
+        { wch: 15 }, // Total Sales Made
+        { wch: 18 }, // Sales Recv
+        { wch: 12 }, // Sales Cash
+        { wch: 12 }, // Sales Bank
+        { wch: 15 }, // Expenses
+        { wch: 12 }, // Exp Cash
+        { wch: 12 }, // Exp Bank
+        { wch: 15 }, // Deposits
+        { wch: 12 }, // Dep Cash
+        { wch: 12 }, // Dep Bank
+        { wch: 15 }, // Withdrawals
+        { wch: 12 }, // W/D Cash
+        { wch: 12 }, // W/D Bank
+        { wch: 15 }, // Pending
+        { wch: 18 }, // Recovery
+        { wch: 20 }, // Open Cash
+        { wch: 20 }, // Close Cash
+        { wch: 20 }, // Open Bank
+        { wch: 20 }  // Close Bank
+    ];
+    worksheet['!cols'] = wscols;
+
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+};
+
