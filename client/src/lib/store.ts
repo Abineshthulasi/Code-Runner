@@ -280,6 +280,11 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateOrder: async (id, updates) => {
+    // Logic for Cancellation
+    if (updates.workStatus === 'Cancelled') {
+      updates = { ...updates, balanceAmount: 0 };
+    }
+
     if (get().isGuestMode) {
       set(state => ({
         orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toISOString() } : o)

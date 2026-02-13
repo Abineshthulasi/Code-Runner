@@ -60,6 +60,11 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
         (o) => o.deliveryStatus === 'Delivered' && o.paymentStatus !== 'Paid'
     );
 
+    // 8. Cancelled Orders
+    const cancelledOrders = store.orders.filter(
+        (o) => o.workStatus === 'Cancelled'
+    );
+
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -192,6 +197,8 @@ export function StaffDashboard({ disableLayout = false }: { disableLayout?: bool
             <OrderTable orders={readyForDeliveryOrders} title="📦 Pending Delivery (Ready)" emptyMsg="No orders waiting for delivery." />
 
             <OrderTable orders={pendingPaymentOrders} title="💰 Pending Payment (Delivered)" emptyMsg="No pending payments for delivered orders." />
+
+            <OrderTable orders={cancelledOrders} title="🚫 Cancelled Orders" emptyMsg="No cancelled orders." />
 
             <OrderTable orders={pendingOrders} title="⏳ Pending Works" emptyMsg="No pending works." />
 
