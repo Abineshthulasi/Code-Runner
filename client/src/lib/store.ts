@@ -297,7 +297,12 @@ export const useStore = create<StoreState>((set, get) => ({
 
       // 2. Logic for Cancellation
       if (updates.workStatus === 'Cancelled') {
-        updates = { ...updates, balanceAmount: 0 };
+        updates = {
+          ...updates,
+          balanceAmount: 0,
+          deliveryStatus: 'Cancelled',
+          paymentStatus: 'Cancelled'
+        };
       }
     }
 
