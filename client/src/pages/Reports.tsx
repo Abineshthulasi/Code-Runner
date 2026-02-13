@@ -235,7 +235,7 @@ export default function Reports() {
       // 1. Pending Amount: Orders created in this month
       const monthlyOrders = store.orders.filter(o => {
         const d = parseLocalDate(o.orderDate || o.createdAt);
-        return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex;
+        return d.getFullYear() === selectedYearInt && d.getMonth() === monthIndex && o.workStatus !== 'Cancelled';
       });
 
       const totalOrderValue = monthlyOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);

@@ -37,7 +37,7 @@ export function ManagerDashboard({ disableLayout = false, hideToggle = false }: 
 
     // 1. Total Sales (Current Month) - Based on Total Order Value of orders created this month
     // OR is it based on payments? "Total Sales" usually implies booked revenue.
-    const monthlyOrders = store.orders.filter(o => isCurrentMonth(o.orderDate || o.createdAt));
+    const monthlyOrders = store.orders.filter(o => isCurrentMonth(o.orderDate || o.createdAt) && o.workStatus !== 'Cancelled');
     const totalSales = monthlyOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
 
     // 2. Total Expenses (Current Month)
