@@ -280,9 +280,25 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   updateOrder: async (id, updates) => {
-    // Logic for Cancellation
-    if (updates.workStatus === 'Cancelled') {
-      updates = { ...updates, balanceAmount: 0 };
+    const currentOrder = get().orders.find(o => o.id === id);
+    if (currentOrder) {
+      // 1. Reverting Cancellations: Status changed FROM Cancelled TO something else
+      if (currentOrder.workStatus === 'Cancelled' && updates.workStatus && updates.workStatus !== 'Cancelled') {
+        const totalPaid = currentOrder.paymentHistory.reduce((sum, p) => sum + Number(p.amount), 0);
+        const newBalance = Number(currentOrder.totalAmount) - totalPaid;
+        const newPaymentStatus = newBalance <= 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
+
+        updates = {
+          ...updates,
+          balanceAmount: newBalance,
+          paymentStatus: newPaymentStatus
+        };
+      }
+
+      // 2. Logic for Cancellation
+      if (updates.workStatus === 'Cancelled') {
+        updates = { ...updates, balanceAmount: 0 };
+      }
     }
 
     if (get().isGuestMode) {
